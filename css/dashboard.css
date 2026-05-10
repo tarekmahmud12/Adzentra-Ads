@@ -1,0 +1,255 @@
+/* Adzentra Ads - Dashboard Styles */
+:root {
+    --primary-color: #0088cc;
+    --accent-color: #00d2ff;
+    --success-color: #00e676;
+    --warning-color: #ffab00;
+    --danger-color: #ff5252;
+    --bg-dark: #0a0e14;
+    --card-bg: rgba(255, 255, 255, 0.05);
+    --border-color: rgba(255, 255, 255, 0.1);
+    --text-main: #ffffff;
+    --text-dim: #a0a0a0;
+}
+
+body {
+    background: var(--bg-dark);
+    color: var(--text-main);
+    font-family: 'Inter', sans-serif;
+    margin: 0;
+    padding: 0;
+    line-height: 1.6;
+}
+
+.dashboard-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Header & Profile Section */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.user-info img {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    border: 2px solid var(--primary-color);
+}
+
+.user-details h3 {
+    margin: 0;
+    font-size: 1rem;
+}
+
+.user-details span {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+}
+
+/* Balance Card (Main Widget) */
+.main-balance-card {
+    background: linear-gradient(135deg, var(--primary-color), #0056b3);
+    padding: 25px;
+    border-radius: 20px;
+    margin: 20px 0;
+    box-shadow: 0 10px 25px rgba(0, 136, 204, 0.3);
+    text-align: center;
+}
+
+.main-balance-card h4 {
+    margin: 0;
+    font-weight: 400;
+    opacity: 0.9;
+}
+
+.main-balance-card .balance-amount {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 10px 0;
+}
+
+/* Stats Grid */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.stat-card {
+    background: var(--card-bg);
+    padding: 15px;
+    border-radius: 15px;
+    border: 1px solid var(--border-color);
+    text-align: center;
+    transition: 0.3s;
+}
+
+.stat-card:hover {
+    border-color: var(--primary-color);
+}
+
+.stat-card h5 {
+    margin: 0;
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+}
+
+.stat-card .value {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-top: 5px;
+    display: block;
+}
+
+.value.green { color: var(--success-color); }
+.value.blue { color: var(--accent-color); }
+
+/* Quick Action Buttons */
+.action-grid {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 25px;
+}
+
+.action-btn {
+    flex: 1;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    color: white;
+    padding: 12px;
+    border-radius: 12px;
+    text-decoration: none;
+    text-align: center;
+    font-size: 0.9rem;
+    font-weight: 600;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.action-btn i {
+    font-size: 1.2rem;
+}
+
+/* Section Titles */
+.section-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.section-title h4 {
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+/* Smart Link Creation Area */
+.link-create-box {
+    background: var(--card-bg);
+    padding: 20px;
+    border-radius: 15px;
+    border: 1px solid var(--border-color);
+}
+
+.link-create-box input {
+    width: 100%;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border-color);
+    padding: 12px;
+    border-radius: 10px;
+    color: white;
+    box-sizing: border-box;
+    margin-bottom: 15px;
+}
+
+.btn-create {
+    width: 100%;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 14px;
+    border-radius: 10px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+/* Recent Activity List */
+.activity-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.activity-item {
+    background: var(--card-bg);
+    padding: 12px 15px;
+    border-radius: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+}
+
+.activity-item .info span {
+    display: block;
+    color: var(--text-dim);
+    font-size: 0.75rem;
+}
+
+.activity-item .earning {
+    color: var(--success-color);
+    font-weight: 600;
+}
+
+/* Bottom Navigation (For Mobile App Feel) */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(10, 14, 20, 0.95);
+    backdrop-filter: blur(10px);
+    display: flex;
+    justify-content: space-around;
+    padding: 12px 5px;
+    border-top: 1px solid var(--border-color);
+    z-index: 1000;
+}
+
+.nav-item {
+    text-decoration: none;
+    color: var(--text-dim);
+    font-size: 0.7rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.nav-item.active {
+    color: var(--primary-color);
+}
+
+/* Tablet & Desktop Layout */
+@media (min-width: 768px) {
+    .stats-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
