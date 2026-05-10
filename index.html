@@ -31,7 +31,6 @@
                 <h1 class="logo">Adzentra<span>Ads</span></h1>
                 <div style="display: flex; align-items: center; gap: 12px;">
                     <span id="top-balance" class="balance-badge">$0.00</span>
-                    <img id="header-avatar" src="assets/default-avatar.png" class="mini-avatar" alt="Avatar">
                 </div>
             </div>
         </header>
@@ -45,16 +44,7 @@
                 <small>Fraud Protection System v1.0 • Checking Traffic</small>
             </div>
 
-            <!-- Welcome Screen (Simplified) -->
-            <div id="welcome-screen" class="status-box" style="display: none;">
-                <div class="profile-card">
-                    <img id="welcome-avatar" src="assets/default-avatar.png" alt="Profile" style="width: 90px; height: 90px; border-radius: 50%; margin-bottom: 20px;">
-                    <h2>Welcome, <span id="user-name">Publisher</span></h2>
-                    <button onclick="showSection('dashboard')" class="btn primary-btn">Enter Dashboard</button>
-                </div>
-            </div>
-
-            <!-- ==================== DASHBOARD (Second Screenshot Style) ==================== -->
+            <!-- ==================== DASHBOARD ==================== -->
             <div id="dashboard-section" class="content-section">
                 <div class="main-balance-card">
                     <div class="card-header">
@@ -160,7 +150,7 @@
                 </div>
             </div>
 
-            <!-- ==================== SETTINGS SECTION (Full Profile + Referral) ==================== -->
+            <!-- ==================== SETTINGS SECTION ==================== -->
             <div id="settings-section" class="content-section" style="display: none;">
                 <h3><i class="fa-solid fa-gear"></i> Account Settings</h3>
                 
@@ -252,14 +242,11 @@
             const user = tele.initDataUnsafe?.user;
             if (user) {
                 const fullName = user.first_name + (user.last_name ? ' ' + user.last_name : '');
-                document.getElementById('user-name').innerText = fullName;
                 document.getElementById('user-name-settings').innerText = fullName;
                 document.getElementById('tg-id-val').innerText = user.id;
                 
                 if (user.photo_url) {
                     document.getElementById('user-photo').src = user.photo_url;
-                    document.getElementById('header-avatar').src = user.photo_url;
-                    document.getElementById('welcome-avatar').src = user.photo_url;
                 }
 
                 // Generate Referral Link
@@ -267,10 +254,10 @@
                 document.getElementById('ref-link').value = refLink;
             }
             
-            // Show welcome first
+            // Loading এর পর সরাসরি Dashboard দেখাবে (Welcome Screen বাদ)
             setTimeout(() => {
                 document.getElementById('loading-screen').style.display = 'none';
-                document.getElementById('welcome-screen').style.display = 'block';
+                document.getElementById('dashboard-section').style.display = 'block';
             }, 1500);
         });
 
@@ -307,4 +294,4 @@
         }
     </script>
 </body>
-                            </html>
+</html>
