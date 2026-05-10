@@ -8,94 +8,194 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body class="dark-theme">
     <div class="app-container">
         <header>
-            <h1 class="logo">Adzentra<span>Ads</span></h1>
+            <div class="logo-container">
+                <h1 class="logo">Adzentra<span>Ads</span></h1>
+            </div>
+            <div id="user-mini-profile" class="mini-profile" style="display: none;">
+                <span id="top-balance" class="balance-badge">$0.0000</span>
+            </div>
         </header>
         
         <main class="hero">
-            <div id="loading-screen">
+            <div id="loading-screen" class="status-box">
                 <div class="spinner"></div>
-                <p>Connecting to Telegram...</p>
+                <p>Establishing Secure Connection...</p>
+                <span class="status-text">Checking Telegram Session</span>
             </div>
 
-            <div id="welcome-screen" style="display: none;">
-                <div class="user-profile">
-                    <img id="user-photo" src="" alt="" style="width: 80px; border-radius: 50%; display: none;">
-                    <h2>Welcome, <span id="user-name">Publisher</span>!</h2>
+            <div id="welcome-screen" class="status-box" style="display: none;">
+                <div class="profile-card">
+                    <img id="user-photo" src="assets/default-avatar.png" alt="Profile">
+                    <h2>Hello, <span id="user-name">Publisher</span>!</h2>
+                    <p class="account-status">Verified Partner ✅</p>
                 </div>
-                <p>Monetize Your Traffic via <br><span>Smart Links</span></p>
+                
+                <div class="promo-text">
+                    <h3>Monetize Your Traffic</h3>
+                    <p>Highest CPM Smart Links for Telegram Mini Apps</p>
+                </div>
+
                 <div class="cta-btns">
-                    <a href="dashboard.html" class="btn primary">Go to Dashboard</a>
+                    <a href="dashboard.html" class="btn primary-btn">Open Dashboard</a>
+                    <a href="links.html" class="btn secondary-btn">Create Smart Link</a>
+                </div>
+                
+                <div class="referral-preview">
+                    <p>Invite friends and earn <span>5% Lifetime</span> commission!</p>
                 </div>
             </div>
 
-            <div id="error-screen" style="display: none;">
-                <h2 style="color: #ff4d4d;">Access Denied</h2>
-                <p>Please open this app from inside Telegram.</p>
+            <div id="error-screen" class="status-box" style="display: none;">
+                <div class="error-icon">⚠️</div>
+                <h2 style="color: #ff4d4d;">Access Restricted</h2>
+                <p>Adzentra Ads is a Telegram-exclusive network. Please open via Telegram Mini App.</p>
+                <a href="https://t.me/your_bot_username" class="btn telegram-btn">Open in Telegram</a>
             </div>
         </main>
+
+        <footer>
+            <p>&copy; 2026 Adzentra Network | Smart CPM Engine</p>
+        </footer>
     </div>
 
     <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+    
     <script>
         async function initApp() {
             const loading = document.getElementById('loading-screen');
             const welcome = document.getElementById('welcome-screen');
             const errorDiv = document.getElementById('error-screen');
+            const miniProfile = document.getElementById('user-mini-profile');
 
-            // api.js এর ফাংশন কল করা
             try {
+                // ১. ইউজার ডাটা এবং রেফারেল চেক (api.js থেকে)
                 const user = await syncTelegramUser();
                 
                 if (user) {
+                    // ২. লোডিং স্ক্রিন বন্ধ এবং ড্যাশবোর্ড অপশন চালু
                     loading.style.display = 'none';
-                    welcome.style.display = 'block';
+                    welcome.style.display = 'flex';
+                    miniProfile.style.display = 'flex';
                     
-                    // ইউজারের তথ্য দেখানো
-                    document.getElementById('user-name').innerText = user.full_name.split(' ')[0];
-                    if (user.profile_pic) {
-                        const img = document.getElementById('user-photo');
-                        img.src = user.profile_pic;
-                        img.style.display = 'inline-block';
+                    // ৩. UI ডাটা আপডেট
+                    document.getElementById('user-name').innerText = user.full_name;
+                    document.getElementById('top-balance').innerText = `$${parseFloat(user.balance).toFixed(4)}`;
+                    
+                    if (user.profile_pic_url) {
+                        document.getElementById('user-photo').src = user.profile_pic_url;
                     }
                     
-                    // ৩ সেকেন্ড পর অটো ড্যাশবোর্ডে নিয়ে যেতে চাইলে নিচের লাইনটি আনকমেন্ট করুন
-                    // setTimeout(() => { window.location.href = 'dashboard.html'; }, 3000);
+                    // ৪. মেটা ডাটা হিসেবে ইউজার আইডি সেভ রাখা (session storage)
+                    sessionStorage.setItem('current_user_id', user.id);
+
+                    console.log("Adzentra Auth: Verified");
                 } else {
-                    loading.style.display = 'none';
-                    errorDiv.style.display = 'block';
+                    throw new Error("Invalid Telegram Session");
                 }
             } catch (err) {
-                console.error(err);
+                console.error("Auth Error:", err);
                 loading.style.display = 'none';
-                errorDiv.style.display = 'block';
+                errorDiv.style.display = 'flex';
             }
         }
 
-        // অ্যাপ লোড হলে রান হবে
         window.onload = initApp;
     </script>
 
     <style>
-        /* লোডিং স্পিনার ডিজাইন */
+        /* Modern Glassmorphism CSS */
+        :root {
+            --primary-color: #0088cc;
+            --accent-color: #00d2ff;
+            --bg-dark: #0a0e14;
+            --card-bg: rgba(255, 255, 255, 0.05);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-dark);
+            color: white;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .app-container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            box-sizing: border-box;
+            background: radial-gradient(circle at top right, #1a2a3a, #0a0e14);
+        }
+
+        .logo span { color: var(--primary-color); }
+
+        .status-box {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .profile-card img {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            border: 3px solid var(--primary-color);
+            box-shadow: 0 0 20px rgba(0, 136, 204, 0.4);
+            margin-bottom: 15px;
+        }
+
+        .btn {
+            display: block;
+            width: 250px;
+            padding: 14px;
+            margin: 10px auto;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: 0.3s;
+        }
+
+        .primary-btn { background: var(--primary-color); color: white; }
+        .secondary-btn { background: var(--card-bg); color: white; border: 1px solid rgba(255,255,255,0.1); }
+        .btn:hover { transform: translateY(-2px); opacity: 0.9; }
+
+        .balance-badge {
+            background: rgba(0, 210, 255, 0.1);
+            color: var(--accent-color);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            border: 1px solid rgba(0, 210, 255, 0.2);
+        }
+
         .spinner {
             width: 40px;
             height: 40px;
-            border: 4px solid rgba(255, 255, 255, 0.1);
-            border-left-color: #0088cc;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top-color: var(--primary-color);
             border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
+            animation: spin 1s infinite linear;
         }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .referral-preview {
+            margin-top: 30px;
+            font-size: 0.85rem;
+            opacity: 0.7;
         }
-        .user-profile { margin-bottom: 20px; }
-        #user-photo { border: 3px solid #0088cc; margin-bottom: 10px; }
+        .referral-preview span { color: #f39c12; font-weight: bold; }
     </style>
 </body>
 </html>
