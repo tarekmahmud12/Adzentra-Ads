@@ -6,65 +6,69 @@
 let currentUser = null;
 let statsUpdateInterval = null;
 
-// ১. অ্যাপ শুরু করার মেইন ফাংশন
+// ১. অ্যাপ শুরু করার মেইন ফাংশন (Updated for Auto-Sync)
 async function initApp() {
     console.log("Adzentra Ads: System Initializing...");
     
     const tg = window.Telegram.WebApp;
     
-    // টেলিগ্রাম ওয়েব অ্যাপ ডিটেক্ট করা
-    const isTelegram = tg.initData !== "";
-    
-    // নোট: আপনার অনুরোধ অনুযায়ী Access Denied স্ক্রিন বাদ দেওয়া হয়েছে। 
-    // তাই টেলিগ্রামের বাইরে থেকে ওপেন হলেও ড্যাশবোর্ড দেখানোর চেষ্টা করবে।
-    
+    // টেলিগ্রাম এনভায়রনমেন্ট রেডি করা
     tg.ready();
     tg.expand();
     tg.enableClosingConfirmation();
 
-    try {
-        // লোডিং স্ক্রিন দেখানো
-        showSection('loading');
+    // লোডিং স্ক্রিন দেখানো
+    showSection('loading');
 
-        // ইউজারের ডাটা সিঙ্ক (api.js থেকে syncTelegramUser কল হবে)
-        currentUser = await syncTelegramUser();
+    // টেলিগ্রাম থেকে ডাটা নিতে অনেক সময় কয়েক মিলিসেকেন্ড দেরি হয়, তাই সামান্য ডিলে দেওয়া হয়েছে
+    setTimeout(async () => {
+        try {
+            // টেলিগ্রাম ইউজার ডাটা চেক করা
+            const tgUser = tg.initDataUnsafe?.user;
+            
+            if (tgUser) {
+                console.log("Telegram User Detected:", tgUser.first_name);
+                
+                // ইউজারের ডাটা সিঙ্ক (api.js থেকে syncTelegramUser কল হবে)
+                // এটি অটোমেটিক ইউজারের TG ID দিয়ে আপনার ডাটাবেজে চেক/রেজিস্ট্রেশন করবে
+                currentUser = await syncTelegramUser();
 
-        if (currentUser) {
-            console.log("Verified User:", currentUser.full_name);
-            
-            // ডাটা লোড হয়ে গেলে সরাসরি ড্যাশবোর্ড বা ওয়েলকাম স্ক্রিন দেখানো
-            // আপনি চাইলে সরাসরি 'dashboard' দিতে পারেন
-            showSection('welcome'); 
-            
-            updateGlobalUI();
-            startBackgroundSync(); // রিয়েল-টাইম ব্যালেন্স আপডেট শুরু
-            
-        } else {
-            // ইউজার না পাওয়া গেলে সরাসরি ড্যাশবোর্ড ওপেন করে রাখা যাতে ব্ল্যাঙ্ক না থাকে
+                if (currentUser) {
+                    console.log("Verified User:", currentUser.full_name);
+                    
+                    // ভেরিফাইড হলে সরাসরি ওয়েলকাম বা ড্যাশবোর্ড
+                    showSection('welcome'); 
+                    updateGlobalUI();
+                    startBackgroundSync(); 
+                } else {
+                    // যদি ডাটাবেজে ইউজার না থাকে তবে সরাসরি ড্যাশবোর্ড দেখাবে (ব্ল্যাঙ্ক যেন না থাকে)
+                    showSection('dashboard');
+                }
+            } else {
+                // টেলিগ্রামের বাইরে থেকে ওপেন করলে সরাসরি ড্যাশবোর্ড বা ব্যাকআপ লজিক
+                console.warn("No Telegram Data! Running in preview mode.");
+                showSection('dashboard');
+            }
+        } catch (error) {
+            console.error("Initialization Failed:", error.message);
             showSection('dashboard');
         }
-    } catch (error) {
-        console.error("Initialization Failed:", error.message);
-        showSection('dashboard');
-    }
+    }, 500); // 0.5 সেকেন্ড ওয়েট করা যাতে TG SDK ডাটা রেডি করতে পারে
 }
 
-// ২. SPA সেকশন নেভিগেশন (index.html এর IDs এর সাথে মিল রেখে)
+// ২. SPA সেকশন নেভিগেশন (সম্পূর্ণ আগের ফাংশন ঠিক রাখা হয়েছে)
 function showSection(sectionId) {
     const screens = ['loading-screen', 'welcome-screen', 'dashboard-section'];
     
-    // সব স্ক্রিন হাইড করা
     screens.forEach(s => {
         const el = document.getElementById(s);
         if (el) el.style.display = 'none';
     });
 
-    // টার্গেট স্ক্রিন শো করা
     const target = document.getElementById(sectionId + (sectionId === 'dashboard' ? '-section' : '-screen'));
     if (target) {
         target.style.display = 'block';
         if (sectionId === 'dashboard') {
-            target.style.display = 'block'; // Dashboard handles its own padding
             const nav = document.getElementById('bottom-nav');
             const miniProfile = document.getElementById('user-mini-profile');
             if (nav) nav.style.display = 'flex';
@@ -73,23 +77,26 @@ function showSection(sectionId) {
     }
 }
 
-// ৩. গ্লোবাল ইউজার ইন্টারফেস আপডেট
+// ৩. গ্লোবাল ইউজার ইন্টারফেস আপডেট (অটোমেটিক ডাটা রেন্ডারিং)
 function updateGlobalUI() {
     if (!currentUser) return;
 
     // ইউজার নেম আপডেট
     document.querySelectorAll('#user-name').forEach(el => el.innerText = currentUser.full_name);
 
-    // ব্যালেন্স আপডেট (৪ দশমিক পর্যন্ত)
+    // ব্যালেন্স আপডেট
     const formattedBalance = `$${parseFloat(currentUser.balance || 0).toFixed(4)}`;
     document.querySelectorAll('#balance-val, #top-balance').forEach(el => {
         el.innerText = formattedBalance;
     });
 
-    // প্রোফাইল পিকচার আপডেট
+    // প্রোফাইল পিকচার (টেলিগ্রাম থেকে বা ডাটাবেজ থেকে)
     document.querySelectorAll('#user-photo').forEach(el => {
         if (currentUser.profile_pic_url) {
             el.src = currentUser.profile_pic_url;
+        } else if (window.Telegram.WebApp.initDataUnsafe?.user?.photo_url) {
+            // যদি ডাটাবেজে না থাকে তবে সরাসরি টেলিগ্রামের URL ব্যবহার করা
+            el.src = window.Telegram.WebApp.initDataUnsafe.user.photo_url;
         }
     });
 
@@ -97,10 +104,9 @@ function updateGlobalUI() {
     const refLinkInput = document.getElementById('ref-link');
     if (refLinkInput) {
         const botUsername = "AdzentraAdsBot"; 
-        refLinkInput.value = `https://t.me/${botUsername}?start=${currentUser.referral_code}`;
+        refLinkInput.value = `https://t.me/${botUsername}?start=${currentUser.referral_code || currentUser.id}`;
     }
     
-    // লাইফটাইম আর্নিং বা অন্যান্য স্ট্যাটাস আপডেট (যদি HTML এ থাকে)
     const lifetimeEl = document.getElementById('lifetime-val');
     if(lifetimeEl) lifetimeEl.innerText = `$${parseFloat(currentUser.total_earned || 0).toFixed(2)}`;
 }
@@ -135,7 +141,7 @@ async function refreshUserData() {
     }
 }
 
-// ৬. স্মার্ট লিংক জেনারেশন ফাংশন (index.html এর বাটন থেকে কল হবে)
+// ৬. স্মার্ট লিংক জেনারেশন ফাংশন (আগের মতোই রাখা হয়েছে)
 async function handleLinkCreation() {
     const urlInput = document.getElementById('target-url');
     const resultArea = document.getElementById('result-area');
@@ -157,6 +163,7 @@ async function handleLinkCreation() {
             resultArea.style.display = 'block';
             finalLinkInput.value = `https://adzentra.click/${shortCode}`;
             window.Telegram.WebApp.showAlert("Smart Link Generated! 🚀");
+            urlInput.value = ""; // ফিল্ড খালি করা
         } else {
             throw error;
         }
@@ -171,12 +178,11 @@ function copyToClipboard(elementId) {
     if (!copyText) return;
 
     copyText.select();
-    copyText.setSelectionRange(0, 99999); // For mobile devices
+    copyText.setSelectionRange(0, 99999);
 
     navigator.clipboard.writeText(copyText.value).then(() => {
         window.Telegram.WebApp.showAlert("Copied to Clipboard! ✅");
     }).catch(err => {
-        // Fallback
         alert("Copied!");
     });
 }
