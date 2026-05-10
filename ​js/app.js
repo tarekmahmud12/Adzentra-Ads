@@ -1,6 +1,6 @@
 /**
- * Adzentra Ads - Professional Application Logic
- * Handling: Auth, Direct Redirect, Referral tracking, Fraud alerts & UI Sync
+ * Adzentra Ads - Professional Application Logic (SPA Version)
+ * Handling: Auth, Section Navigation, Referral tracking, Fraud alerts & UI Sync
  */
 
 let currentUser = null;
@@ -10,161 +10,184 @@ let statsUpdateInterval = null;
 async function initApp() {
     console.log("Adzentra Ads: System Initializing...");
     
-    // টেলিগ্রাম ওয়েব অ্যাপ ডিটেক্ট ও রেডি করা
-    const isTelegram = window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData !== "";
+    const tg = window.Telegram.WebApp;
     
-    if (isTelegram) {
-        const tg = window.Telegram.WebApp;
-        tg.ready();
-        tg.expand();
-        tg.enableClosingConfirmation(); // অ্যাপ ভুল করে বন্ধ হওয়া রোধ করতে
+    // টেলিগ্রাম ওয়েব অ্যাপ ডিটেক্ট করা
+    const isTelegram = tg.initData !== "";
+    
+    // নোট: আপনার অনুরোধ অনুযায়ী Access Denied স্ক্রিন বাদ দেওয়া হয়েছে। 
+    // তাই টেলিগ্রামের বাইরে থেকে ওপেন হলেও ড্যাশবোর্ড দেখানোর চেষ্টা করবে।
+    
+    tg.ready();
+    tg.expand();
+    tg.enableClosingConfirmation();
 
-        try {
-            // ইউজারের ডাটা সিঙ্ক (api.js থেকে syncTelegramUser কল হবে)
-            currentUser = await syncTelegramUser();
+    try {
+        // লোডিং স্ক্রিন দেখানো
+        showSection('loading');
 
-            if (currentUser) {
-                console.log("Verified User:", currentUser.full_name);
-                
-                // --- অটো রিডাইরেক্ট লজিক ---
-                // যদি ইউজার ইনডেক্স পেজে থাকে তবে সরাসরি ড্যাশবোর্ডে নিয়ে যাবে
-                const isIndexPath = window.location.pathname.includes('index.html') || window.location.pathname.endsWith('/');
-                if (isIndexPath) {
-                    window.location.href = 'dashboard.html';
-                    return;
-                }
+        // ইউজারের ডাটা সিঙ্ক (api.js থেকে syncTelegramUser কল হবে)
+        currentUser = await syncTelegramUser();
 
-                // ড্যাশবোর্ডে থাকলে ডাটা রেন্ডার করা
-                updateGlobalUI();
-                startBackgroundSync(); // রিয়েল-টাইম ব্যালেন্স আপডেট শুরু
-                
-            } else {
-                handleAccessDenied();
-            }
-        } catch (error) {
-            console.error("Initialization Failed:", error.message);
-            handleAccessDenied();
+        if (currentUser) {
+            console.log("Verified User:", currentUser.full_name);
+            
+            // ডাটা লোড হয়ে গেলে সরাসরি ড্যাশবোর্ড বা ওয়েলকাম স্ক্রিন দেখানো
+            // আপনি চাইলে সরাসরি 'dashboard' দিতে পারেন
+            showSection('welcome'); 
+            
+            updateGlobalUI();
+            startBackgroundSync(); // রিয়েল-টাইম ব্যালেন্স আপডেট শুরু
+            
+        } else {
+            // ইউজার না পাওয়া গেলে সরাসরি ড্যাশবোর্ড ওপেন করে রাখা যাতে ব্ল্যাঙ্ক না থাকে
+            showSection('dashboard');
         }
-    } else {
-        // টেলিগ্রামের বাইরে থেকে ওপেন করলে এরর স্ক্রিন
-        handleAccessDenied();
+    } catch (error) {
+        console.error("Initialization Failed:", error.message);
+        showSection('dashboard');
     }
 }
 
-// ২. এক্সেস ডিনাইড বা এরর হ্যান্ডেলিং
-function handleAccessDenied() {
-    const loading = document.getElementById('loading-screen');
-    const errorScreen = document.getElementById('error-screen');
-    const welcome = document.getElementById('welcome-screen');
-
-    if (loading) loading.style.display = 'none';
-    if (welcome) welcome.style.display = 'none';
-    if (errorScreen) errorScreen.style.display = 'flex';
+// ২. SPA সেকশন নেভিগেশন (index.html এর IDs এর সাথে মিল রেখে)
+function showSection(sectionId) {
+    const screens = ['loading-screen', 'welcome-screen', 'dashboard-section'];
     
-    console.warn("Security Alert: Unauthorized device or browser.");
+    // সব স্ক্রিন হাইড করা
+    screens.forEach(s => {
+        const el = document.getElementById(s);
+        if (el) el.style.display = 'none';
+    });
+
+    // টার্গেট স্ক্রিন শো করা
+    const target = document.getElementById(sectionId + (sectionId === 'dashboard' ? '-section' : '-screen'));
+    if (target) {
+        target.style.display = 'block';
+        if (sectionId === 'dashboard') {
+            target.style.display = 'block'; // Dashboard handles its own padding
+            const nav = document.getElementById('bottom-nav');
+            const miniProfile = document.getElementById('user-mini-profile');
+            if (nav) nav.style.display = 'flex';
+            if (miniProfile) miniProfile.style.display = 'block';
+        }
+    }
 }
 
-// ৩. গ্লোবাল ইউজার ইন্টারফেস আপডেট (নাম, ছবি, ব্যালেন্স, রেফার কোড)
+// ৩. গ্লোবাল ইউজার ইন্টারফেস আপডেট
 function updateGlobalUI() {
     if (!currentUser) return;
 
     // ইউজার নেম আপডেট
     document.querySelectorAll('#user-name').forEach(el => el.innerText = currentUser.full_name);
 
-    // ব্যালেন্স আপডেট (৪ দশমিক পর্যন্ত একুরেট আর্নিং)
-    document.querySelectorAll('#user-balance, #top-balance').forEach(el => {
-        el.innerText = `$${parseFloat(currentUser.balance || 0).toFixed(4)}`;
+    // ব্যালেন্স আপডেট (৪ দশমিক পর্যন্ত)
+    const formattedBalance = `$${parseFloat(currentUser.balance || 0).toFixed(4)}`;
+    document.querySelectorAll('#balance-val, #top-balance').forEach(el => {
+        el.innerText = formattedBalance;
     });
 
     // প্রোফাইল পিকচার আপডেট
-    document.querySelectorAll('#user-photo, #user-pic').forEach(el => {
+    document.querySelectorAll('#user-photo').forEach(el => {
         if (currentUser.profile_pic_url) {
             el.src = currentUser.profile_pic_url;
-            el.style.display = 'block';
         }
     });
 
-    // যদি ড্যাশবোর্ডে রেফারেল সেকশন থাকে তবে কোড বসানো
-    const refCodeElement = document.getElementById('referral-link');
-    if (refCodeElement) {
-        const botUsername = "AdzentraAdsBot"; // আপনার বটের ইউজারনেম এখানে দিন
-        refCodeElement.value = `https://t.me/${botUsername}?start=${currentUser.referral_code}`;
+    // রেফারেল লিংক জেনারেট
+    const refLinkInput = document.getElementById('ref-link');
+    if (refLinkInput) {
+        const botUsername = "AdzentraAdsBot"; 
+        refLinkInput.value = `https://t.me/${botUsername}?start=${currentUser.referral_code}`;
     }
+    
+    // লাইফটাইম আর্নিং বা অন্যান্য স্ট্যাটাস আপডেট (যদি HTML এ থাকে)
+    const lifetimeEl = document.getElementById('lifetime-val');
+    if(lifetimeEl) lifetimeEl.innerText = `$${parseFloat(currentUser.total_earned || 0).toFixed(2)}`;
 }
 
-// ৪. ব্যাকগ্রাউন্ড সিঙ্ক (প্রতি ৩০ সেকেন্ডে ডাটা রিফ্রেশ করবে)
+// ৪. ব্যাকগ্রাউন্ড সিঙ্ক (প্রতি ৩০ সেকেন্ডে ডাটা রিফ্রেশ)
 function startBackgroundSync() {
     if (statsUpdateInterval) clearInterval(statsUpdateInterval);
     
     statsUpdateInterval = setInterval(async () => {
         await refreshUserData();
-    }, 30000); // 30 Seconds
+    }, 30000); 
 }
 
 // ৫. ইউজার ডাটা রিফ্রেশ ফাংশন
 async function refreshUserData() {
     if (!currentUser) return;
     
-    const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', currentUser.id)
-        .single();
+    try {
+        const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', currentUser.id)
+            .single();
 
-    if (!error && data) {
-        currentUser = data;
-        updateGlobalUI();
-        console.log("Stats Auto-Synced ✅");
-    }
-}
-
-// ৬. ক্লিপবোর্ডে কপি করার স্মার্ট ফাংশন
-function copyToClipboard(elementIdOrText) {
-    let text = "";
-    const element = document.getElementById(elementIdOrText);
-    
-    if (element) {
-        text = element.value || element.innerText;
-    } else {
-        text = elementIdOrText;
-    }
-
-    navigator.clipboard.writeText(text).then(() => {
-        if (window.Telegram && window.Telegram.WebApp) {
-            window.Telegram.WebApp.showAlert("Copied to Clipboard! ✅");
-        } else {
-            alert("Copied!");
+        if (!error && data) {
+            currentUser = data;
+            updateGlobalUI();
+            console.log("Stats Auto-Synced ✅");
         }
-    }).catch(err => console.error('Copy failed', err));
+    } catch (e) {
+        console.log("Sync failed silently...");
+    }
 }
 
-// ৭. সিকিউরিটি এবং ফ্রড ডিটেকশন লগিং
-async function triggerSecurityAlert(reason, details = {}) {
-    console.warn("🚨 Security Alert:", reason);
+// ৬. স্মার্ট লিংক জেনারেশন ফাংশন (index.html এর বাটন থেকে কল হবে)
+async function handleLinkCreation() {
+    const urlInput = document.getElementById('target-url');
+    const resultArea = document.getElementById('result-area');
+    const finalLinkInput = document.getElementById('final-link');
     
-    if (currentUser) {
-        // ডাটাবেজে ফ্রড লগ সেভ করা (ঐচ্ছিক - যদি ফ্রড টেবিল থাকে)
-        /*
-        await supabase.from('fraud_logs').insert([{
+    const url = urlInput.value;
+    if (!url) return window.Telegram.WebApp.showAlert("Please enter a valid URL!");
+
+    const shortCode = Math.random().toString(36).substring(7);
+    
+    try {
+        const { error } = await supabase.from('smart_links').insert([{
             publisher_id: currentUser.id,
-            reason: reason,
-            details: details,
-            ip: "Tracked" 
+            original_url: url,
+            short_code: shortCode
         }]);
-        */
-        
-        // সিরিয়াস ফ্রড হলে অ্যাপ ক্লোজ করে দেওয়া
-        if (reason === "VPN_DETECTED" || reason === "MULTIPLE_ACCOUNT") {
-            window.Telegram.WebApp.showAlert("Security Violation Detected! Access Suspended.");
-            window.Telegram.WebApp.close();
+
+        if (!error) {
+            resultArea.style.display = 'block';
+            finalLinkInput.value = `https://adzentra.click/${shortCode}`;
+            window.Telegram.WebApp.showAlert("Smart Link Generated! 🚀");
+        } else {
+            throw error;
         }
+    } catch (err) {
+        window.Telegram.WebApp.showAlert("Error: " + err.message);
     }
 }
 
-// ৮. পেজ চেঞ্জ করার সময় ক্লিনআপ
-window.addEventListener('beforeunload', () => {
-    if (statsUpdateInterval) clearInterval(statsUpdateInterval);
-});
+// ৭. ক্লিপবোর্ডে কপি করার ফাংশন
+function copyToClipboard(elementId) {
+    const copyText = document.getElementById(elementId);
+    if (!copyText) return;
+
+    copyText.select();
+    copyText.setSelectionRange(0, 99999); // For mobile devices
+
+    navigator.clipboard.writeText(copyText.value).then(() => {
+        window.Telegram.WebApp.showAlert("Copied to Clipboard! ✅");
+    }).catch(err => {
+        // Fallback
+        alert("Copied!");
+    });
+}
+
+// ৮. সিকিউরিটি এবং ফ্রড ডিটেকশন
+async function triggerSecurityAlert(reason) {
+    console.warn("🚨 Security Alert:", reason);
+    if (reason === "VPN_DETECTED") {
+        window.Telegram.WebApp.showAlert("VPN is not allowed! Please turn off VPN.");
+    }
+}
 
 // পেজ লোড হলে অ্যাপ ইনিশিয়ালাইজ করা
 window.addEventListener('DOMContentLoaded', initApp);
