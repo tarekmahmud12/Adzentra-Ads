@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Adzentra Ads - Smart Link Network</title>
     
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -10,105 +10,257 @@
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/dashboard.css">
+
+    <style>
+        /* --- প্রফেশনাল ডিজাইন রিকভারি --- */
+        :root {
+            --primary-color: #0088cc;
+            --accent-color: #00d2ff;
+            --bg-dark: #0a0e14;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --text-main: #ffffff;
+            --success: #27ae60;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-dark);
+            background: radial-gradient(circle at top right, #1a2a3a, #0a0e14);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .app-container { padding: 20px; box-sizing: border-box; }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .logo { font-size: 24px; font-weight: 700; margin: 0; }
+        .logo span { color: var(--primary-color); }
+
+        .balance-badge {
+            background: rgba(0, 210, 255, 0.1);
+            color: var(--accent-color);
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            border: 1px solid rgba(0, 210, 255, 0.2);
+        }
+
+        /* Status Boxes */
+        .status-box {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            min-height: 70vh;
+        }
+
+        /* Profile Card Style */
+        .profile-card {
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 24px;
+            border: 1px solid rgba(255,255,255,0.1);
+            width: 100%;
+            max-width: 320px;
+            margin-bottom: 20px;
+        }
+
+        .profile-card img {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 4px solid var(--primary-color);
+            box-shadow: 0 0 25px rgba(0, 136, 204, 0.3);
+            margin-bottom: 15px;
+        }
+
+        /* Stats Cards */
+        .main-balance-card {
+            background: linear-gradient(135deg, var(--primary-color), #005580);
+            padding: 25px;
+            border-radius: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        }
+
+        .balance-amount { font-size: 36px; font-weight: 700; margin: 10px 0; }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .stat-card h5 { margin: 0; opacity: 0.6; font-size: 12px; text-transform: uppercase; }
+        .stat-card .value { font-size: 18px; font-weight: 700; display: block; margin-top: 5px; }
+
+        /* Inputs & Buttons */
+        .link-create-box {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 20px;
+            margin-bottom: 15px;
+        }
+
+        input {
+            width: 100%;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 12px;
+            border-radius: 12px;
+            color: white;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border-radius: 12px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .primary-btn { background: var(--primary-color); color: white; }
+        .btn-create { background: var(--primary-color); color: white; width: 100%; border: none; padding: 12px; border-radius: 10px; font-weight: 600; }
+
+        /* Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            background: rgba(10, 14, 20, 0.95);
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 0;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .nav-item { color: #888; text-decoration: none; font-size: 11px; text-align: center; }
+        .nav-item i { font-size: 20px; display: block; margin-bottom: 4px; }
+        .nav-item.active { color: var(--primary-color); }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s infinite linear;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        .blue { color: var(--accent-color); }
+        .green { color: var(--success); }
+        .yellow { color: #f39c12; }
+    </style>
 </head>
-<body class="dark-theme">
+<body>
 
     <div class="app-container">
         <header>
-            <div class="logo-container">
-                <h1 class="logo">Adzentra<span>Ads</span></h1>
-            </div>
-            <div id="user-mini-profile" class="mini-profile" style="display: none;">
+            <h1 class="logo">Adzentra<span>Ads</span></h1>
+            <div id="user-mini-profile" style="display: none;">
                 <span id="top-balance" class="balance-badge">$0.0000</span>
             </div>
         </header>
 
         <main id="main-content">
-            
             <div id="loading-screen" class="status-box">
                 <div class="spinner"></div>
-                <p>Connecting to Adzentra Engine...</p>
+                <p style="margin-top: 15px;">Initializing Secure Session...</p>
             </div>
 
             <div id="welcome-screen" class="status-box" style="display: none;">
                 <div class="profile-card">
-                    <img id="user-photo" src="assets/default-avatar.png" alt="Profile">
+                    <img id="user-photo" src="https://via.placeholder.com/100" alt="Profile">
                     <h2>Hello, <span id="user-name">Publisher</span>!</h2>
-                    <p class="account-status">Verified Partner ✅</p>
+                    <p style="color:var(--success)">Verified Partner ✅</p>
                 </div>
-                <div class="promo-text">
-                    <h3>Monetize Your Traffic</h3>
-                    <p>Highest CPM Smart Links with 65% Publisher Share</p>
-                </div>
-                <div class="cta-btns">
-                    <button onclick="showSection('dashboard')" class="btn primary-btn">Open Dashboard</button>
-                </div>
+                <button onclick="showSection('dashboard')" class="btn primary-btn">Open Dashboard</button>
             </div>
 
-            <div id="dashboard-section" style="display: none;">
+            <div id="dashboard-section" style="display: none; padding-bottom: 80px;">
                 <div class="main-balance-card">
                     <h4>Available Balance</h4>
                     <div class="balance-amount" id="balance-val">$0.0000</div>
-                    <p style="font-size: 0.8rem; opacity: 0.7;">Lifetime Earnings: <span id="lifetime-val">$0.00</span></p>
+                    <p style="opacity: 0.8; font-size: 13px;">Daily Refresh in 12h</p>
                 </div>
 
                 <div class="stats-grid">
                     <div class="stat-card">
-                        <h5>Today Clicks</h5>
+                        <h5>Clicks</h5>
                         <span class="value blue" id="today-clicks">0</span>
                     </div>
                     <div class="stat-card">
-                        <h5>Today Earnings</h5>
+                        <h5>Earnings</h5>
                         <span class="value green" id="today-earning">$0.0000</span>
                     </div>
                     <div class="stat-card">
-                        <h5>Current CPM</h5>
+                        <h5>Avg CPM</h5>
                         <span class="value" id="cpm-val">$1.50</span>
                     </div>
                     <div class="stat-card">
-                        <h5>Referral Earn</h5>
+                        <h5>Referral</h5>
                         <span class="value yellow" id="ref-earning">$0.00</span>
                     </div>
                 </div>
 
-                <div class="section-title"><h4>Create Smart Link</h4></div>
                 <div class="link-create-box">
-                    <input type="url" id="target-url" placeholder="Enter Destination URL (e.g. google.com)">
-                    <button class="btn-create" onclick="handleLinkCreation()">Generate Smart Link</button>
+                    <h4 style="margin-top:0">Create Smart Link</h4>
+                    <input type="url" id="target-url" placeholder="Paste destination URL...">
+                    <button class="btn-create" onclick="handleLinkCreation()">Generate Link</button>
                     <div id="result-area" style="display:none; margin-top:15px;">
                         <input type="text" id="final-link" readonly>
-                        <button class="btn-create" style="background:#27ae60;" onclick="copyToClipboard('final-link')">Copy Link</button>
+                        <button class="btn-create" style="background:var(--success)" onclick="copyToClipboard('final-link')">Copy Now</button>
                     </div>
                 </div>
 
-                <div class="section-title"><h4>Invite & Earn 5%</h4></div>
-                <div class="link-create-box" style="border: 1px dashed #f39c12;">
+                <div class="link-create-box" style="border: 1px dashed #f39c12; background: rgba(243, 156, 18, 0.05);">
+                    <h4 style="margin-top:0; color:#f39c12">Referral Program</h4>
+                    <p style="font-size: 12px; opacity: 0.8;">Share this link and earn 5% commission.</p>
                     <input type="text" id="ref-link" readonly>
-                    <button class="btn-create" style="background:#f39c12;" onclick="copyToClipboard('ref-link')">Copy Referral Link</button>
+                    <button class="btn-create" style="background:#f39c12" onclick="copyToClipboard('ref-link')">Copy Referral Link</button>
                 </div>
-                <br><br><br> </div>
-
-            <div id="error-screen" class="status-box" style="display: none;">
-                <div class="error-icon">⚠️</div>
-                <h2>Access Restricted</h2>
-                <p>Please open this app from your Telegram Bot.</p>
-                <a href="https://t.me/AdzentraAdsBot" class="btn telegram-btn">Open Telegram</a>
             </div>
 
+            <div id="error-screen" class="status-box" style="display: none;">
+                <div style="font-size: 50px; margin-bottom: 20px;">⚠️</div>
+                <h2 style="color: #ff4d4d;">Access Denied</h2>
+                <p>This application is only accessible via<br><b>Adzentra Ads Telegram Bot</b>.</p>
+                <a href="https://t.me/AdzentraAdsBot" class="btn primary-btn" style="margin-top: 20px;">Open in Telegram</a>
+            </div>
         </main>
 
         <nav id="bottom-nav" class="bottom-nav" style="display: none;">
             <a href="javascript:void(0)" onclick="showSection('dashboard')" class="nav-item active">
-                <i class="fa-solid fa-house"></i><span>Home</span>
+                <i class="fa-solid fa-house"></i>Home
             </a>
-            <a href="withdraw.html" class="nav-item">
-                <i class="fa-solid fa-wallet"></i><span>Withdraw</span>
-            </a>
-            <a href="analytics.html" class="nav-item">
-                <i class="fa-solid fa-chart-bar"></i><span>Stats</span>
-            </a>
+            <a href="withdraw.html" class="nav-item"><i class="fa-solid fa-wallet"></i>Withdraw</a>
+            <a href="analytics.html" class="nav-item"><i class="fa-solid fa-chart-bar"></i>Stats</a>
         </nav>
     </div>
 
@@ -116,7 +268,7 @@
     <script src="js/app.js"></script>
 
     <script>
-        // --- 1. SPA Navigation Logic ---
+        // --- Navigation Logic ---
         function showSection(section) {
             const sections = ['loading-screen', 'welcome-screen', 'dashboard-section', 'error-screen'];
             sections.forEach(s => document.getElementById(s).style.display = 'none');
@@ -124,91 +276,89 @@
             if(section === 'dashboard') {
                 document.getElementById('dashboard-section').style.display = 'block';
                 document.getElementById('bottom-nav').style.display = 'flex';
+                document.getElementById('user-mini-profile').style.display = 'block';
                 loadDashboardData();
             } else {
                 document.getElementById(section + '-screen').style.display = 'flex';
             }
         }
 
-        // --- 2. Revenue & CPM Logic (35% Margin) ---
+        // --- Data Loading ---
         async function loadDashboardData() {
-            if(!currentUser) return;
+            if(!window.currentUser) return;
+            const user = window.currentUser;
             
-            // UI Update from Session/App data
-            document.getElementById('balance-val').innerText = `$${parseFloat(currentUser.balance).toFixed(4)}`;
-            document.getElementById('user-name').innerText = currentUser.full_name;
-            document.getElementById('ref-link').value = `https://t.me/AdzentraAdsBot?start=${currentUser.referral_code}`;
+            document.getElementById('balance-val').innerText = `$${parseFloat(user.balance || 0).toFixed(4)}`;
+            document.getElementById('top-balance').innerText = `$${parseFloat(user.balance || 0).toFixed(4)}`;
+            document.getElementById('user-name').innerText = user.full_name;
+            document.getElementById('ref-link').value = `https://t.me/AdzentraAdsBot?start=${user.referral_code}`;
             
-            // Fetch Real-time Clicks from Supabase
-            const { data: clicks, error } = await supabase
-                .from('clicks')
-                .select('*')
-                .eq('publisher_id', currentUser.id);
+            if(user.profile_pic_url) document.getElementById('user-photo').src = user.profile_pic_url;
 
-            if(!error && clicks) {
-                let publisherTotal = 0;
-                clicks.forEach(c => {
-                    // এখানে লজিক: Admin Share ৩৫%, Publisher পায় ৬৫%
-                    publisherTotal += parseFloat(c.publisher_share || 0);
-                });
-
+            // Fetch Clicks
+            const { data: clicks } = await supabase.from('clicks').select('*').eq('publisher_id', user.id);
+            if(clicks) {
+                let earnings = clicks.reduce((acc, c) => acc + parseFloat(c.publisher_share || 0), 0);
                 document.getElementById('today-clicks').innerText = clicks.length;
-                document.getElementById('today-earning').innerText = `$${publisherTotal.toFixed(4)}`;
-                
-                // Average CPM Display (Publisher Side)
-                const cpm = clicks.length > 0 ? (publisherTotal / clicks.length) * 1000 : 1.50;
-                document.getElementById('cpm-val').innerText = `$${cpm.toFixed(2)}`;
+                document.getElementById('today-earning').innerText = `$${earnings.toFixed(4)}`;
             }
         }
 
-        // --- 3. Smart Link Generation ---
+        // --- Auth Init (টেলিগ্রাম ডিটেকশন ফিক্স) ---
+        async function initAuth() {
+            const tg = window.Telegram.WebApp;
+            
+            // ১. চেক করা হচ্ছে এটা টেলিগ্রাম কি না
+            if (tg.initData === "") {
+                console.log("Not in Telegram");
+                showSection('error');
+                return;
+            }
+
+            try {
+                // ২. অল্প সময় অপেক্ষা করা ডাটা সিঙ্ক হওয়ার জন্য
+                tg.ready();
+                tg.expand();
+
+                const user = await syncTelegramUser(); // api.js থেকে
+                if(user) {
+                    window.currentUser = user;
+                    showSection('welcome');
+                } else {
+                    showSection('error');
+                }
+            } catch(e) {
+                console.error(e);
+                showSection('error');
+            }
+        }
+
+        window.onload = initAuth;
+
+        // --- Link Creation ---
         async function handleLinkCreation() {
             const url = document.getElementById('target-url').value;
-            if(!url) return alert("Enter URL");
+            if(!url) return tg.showAlert("Please enter a destination URL");
 
             const code = Math.random().toString(36).substring(7);
-            const final = `https://adzentra.click/${code}`; // Your redirect domain
-
             const { error } = await supabase.from('smart_links').insert([{
-                publisher_id: currentUser.id,
+                publisher_id: window.currentUser.id,
                 original_url: url,
                 short_code: code
             }]);
 
             if(!error) {
                 document.getElementById('result-area').style.display = 'block';
-                document.getElementById('final-link').value = final;
+                document.getElementById('final-link').value = `https://adzentra.click/${code}`;
             }
         }
 
-        // --- 4. Init Trigger ---
-        window.onload = async () => {
-            try {
-                const user = await syncTelegramUser();
-                if(user) {
-                    currentUser = user;
-                    showSection('welcome'); // Show welcome screen first
-                } else {
-                    showSection('error');
-                }
-            } catch(e) {
-                showSection('error');
-            }
-        };
+        function copyToClipboard(id) {
+            const copyText = document.getElementById(id);
+            copyText.select();
+            document.execCommand("copy");
+            window.Telegram.WebApp.showAlert("Copied to clipboard! ✅");
+        }
     </script>
-
-    <style>
-        /* CSS Optimization for SPA */
-        #main-content { padding-bottom: 80px; }
-        .status-box { flex-direction: column; height: 70vh; display: flex; justify-content: center; align-items: center; text-align: center; }
-        .spinner { width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.1); border-top-color: var(--primary-color); border-radius: 50%; animation: spin 1s infinite linear; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #111; display: flex; justify-content: space-around; padding: 15px; border-top: 1px solid #222; }
-        .nav-item { color: #888; text-decoration: none; text-align: center; font-size: 12px; display: flex; flex-direction: column; }
-        .nav-item.active { color: var(--primary-color); }
-        .nav-item i { font-size: 20px; margin-bottom: 5px; }
-        .account-status { color: #27ae60; font-weight: bold; font-size: 14px; }
-        .yellow { color: #f39c12; }
-    </style>
 </body>
 </html>
