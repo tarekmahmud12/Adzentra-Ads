@@ -45,24 +45,16 @@
                 <small>Fraud Protection System v1.0 • Checking Traffic</small>
             </div>
 
-            <!-- Welcome Screen -->
+            <!-- Welcome Screen (Simplified) -->
             <div id="welcome-screen" class="status-box" style="display: none;">
                 <div class="profile-card">
-                    <div class="avatar-container">
-                        <img id="user-photo" src="assets/default-avatar.png" alt="Profile">
-                        <span class="status-dot"></span>
-                    </div>
+                    <img id="welcome-avatar" src="assets/default-avatar.png" alt="Profile" style="width: 90px; height: 90px; border-radius: 50%; margin-bottom: 20px;">
                     <h2>Welcome, <span id="user-name">Publisher</span></h2>
-                    <p class="user-tg-id">TG ID: <span id="tg-id-val">000000000</span></p>
-                    
-                    <div class="score-box">
-                        <span>Traffic Quality Score: <strong id="traffic-score" style="color:#f1c40f;">Excellent</strong></span>
-                    </div>
+                    <button onclick="showSection('dashboard')" class="btn primary-btn">Enter Dashboard</button>
                 </div>
-                <button onclick="showSection('dashboard')" class="btn primary-btn">Enter Dashboard</button>
             </div>
 
-            <!-- ==================== DASHBOARD ==================== -->
+            <!-- ==================== DASHBOARD (Second Screenshot Style) ==================== -->
             <div id="dashboard-section" class="content-section">
                 <div class="main-balance-card">
                     <div class="card-header">
@@ -103,29 +95,6 @@
                     </div>
                 </div>
 
-                <!-- Smart Link Creator -->
-                <div class="action-box">
-                    <div class="box-title">
-                        <i class="fa-solid fa-link"></i>
-                        <h4>Create Smart Link</h4>
-                    </div>
-                    <p class="box-desc">Smart Rotation Engine • Best CPM Selection • Fraud Protected</p>
-                    
-                    <div class="input-group">
-                        <input type="url" id="target-url" placeholder="Paste your original URL here...">
-                        <button class="btn-action" onclick="handleLinkCreation()">Generate Monetized Link</button>
-                    </div>
-                    
-                    <div id="result-area" style="display:none; margin-top:15px;">
-                        <div class="result-label">Your Monetized Smart Link:</div>
-                        <div class="copy-container">
-                            <input type="text" id="final-link" readonly>
-                            <button class="copy-icon-btn" onclick="copyToClipboard('final-link')"><i class="fa-solid fa-copy"></i></button>
-                        </div>
-                        <p class="fraud-status"><i class="fa-solid fa-circle-check"></i> VPN / Bot / Fake traffic will be blocked automatically.</p>
-                    </div>
-                </div>
-
                 <!-- Quick Links -->
                 <div class="quick-links">
                     <a href="javascript:void(0)" onclick="showSection('links')" class="quick-btn">
@@ -144,7 +113,6 @@
             <div id="links-section" class="content-section" style="display: none;">
                 <h3><i class="fa-solid fa-link"></i> My Smart Links</h3>
                 <div id="links-list">
-                    <!-- Dynamic links will be loaded here via JS -->
                     <p style="text-align:center; color:#888; padding:20px;">No links created yet.</p>
                 </div>
             </div>
@@ -192,9 +160,25 @@
                 </div>
             </div>
 
-            <!-- ==================== SETTINGS SECTION ==================== -->
+            <!-- ==================== SETTINGS SECTION (Full Profile + Referral) ==================== -->
             <div id="settings-section" class="content-section" style="display: none;">
                 <h3><i class="fa-solid fa-gear"></i> Account Settings</h3>
+                
+                <!-- Full Profile Info -->
+                <div class="action-box">
+                    <div class="profile-card" style="text-align: center; padding: 20px 0;">
+                        <div class="avatar-container">
+                            <img id="user-photo" src="assets/default-avatar.png" alt="Profile" style="width: 110px; height: 110px; border-radius: 50%;">
+                        </div>
+                        <h2>Welcome, <span id="user-name-settings">Publisher</span></h2>
+                        <p class="user-tg-id">TG ID: <span id="tg-id-val">000000000</span></p>
+                        
+                        <div class="score-box">
+                            <span>Traffic Quality Score: <strong id="traffic-score" style="color:#f1c40f;">Excellent</strong></span>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="action-box">
                     <div class="setting-item">
                         <span>Telegram Account</span>
@@ -208,8 +192,24 @@
                         <span>2FA Security</span>
                         <button class="btn small-btn">Enable</button>
                     </div>
-                    
-                    <hr>
+                </div>
+
+                <!-- Referral Link -->
+                <div class="action-box">
+                    <div class="box-title">
+                        <i class="fa-solid fa-users"></i>
+                        <h4>Referral Program</h4>
+                    </div>
+                    <p class="box-desc">Earn 5% lifetime commission from your referrals</p>
+                    <div class="copy-container">
+                        <input type="text" id="ref-link" readonly value="Loading...">
+                        <button class="copy-icon-btn" onclick="copyToClipboard('ref-link')">
+                            <i class="fa-solid fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="action-box">
                     <div class="form-group">
                         <label>Payment Wallet Address</label>
                         <input type="text" id="payment-wallet" placeholder="USDT / TON Address">
@@ -251,16 +251,23 @@
         document.addEventListener('DOMContentLoaded', () => {
             const user = tele.initDataUnsafe?.user;
             if (user) {
-                document.getElementById('user-name').innerText = user.first_name + (user.last_name ? ' ' + user.last_name : '');
+                const fullName = user.first_name + (user.last_name ? ' ' + user.last_name : '');
+                document.getElementById('user-name').innerText = fullName;
+                document.getElementById('user-name-settings').innerText = fullName;
                 document.getElementById('tg-id-val').innerText = user.id;
                 
                 if (user.photo_url) {
                     document.getElementById('user-photo').src = user.photo_url;
                     document.getElementById('header-avatar').src = user.photo_url;
+                    document.getElementById('welcome-avatar').src = user.photo_url;
                 }
+
+                // Generate Referral Link
+                const refLink = `https://t.me/yourbotusername?start=ref_${user.id}`;
+                document.getElementById('ref-link').value = refLink;
             }
             
-            // Show welcome first then dashboard
+            // Show welcome first
             setTimeout(() => {
                 document.getElementById('loading-screen').style.display = 'none';
                 document.getElementById('welcome-screen').style.display = 'block';
@@ -275,11 +282,10 @@
             document.getElementById('nav-' + section).classList.add('active');
         }
 
-        // Placeholder functions
+        // Placeholder functions (কোনো ফাংশন মুছা হয়নি)
         function handleLinkCreation() {
             const url = document.getElementById('target-url').value;
             if (!url) return alert("Please enter a valid URL");
-            
             const generated = "https://adzentrads.com/s/" + Math.random().toString(36).substring(2, 10);
             document.getElementById('final-link').value = generated;
             document.getElementById('result-area').style.display = 'block';
@@ -289,7 +295,7 @@
             const el = document.getElementById(id);
             el.select();
             document.execCommand('copy');
-            alert("✅ Link Copied!");
+            alert("✅ Copied Successfully!");
         }
 
         function requestWithdraw() {
@@ -301,4 +307,4 @@
         }
     </script>
 </body>
-    </html>
+                            </html>
