@@ -3,97 +3,211 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Adzentra Ads - Publisher Dashboard</title>
+    <title>Adzentra Ads - Professional Smart Link Ad Network</title>
     
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* দ্রুত কিছু স্টাইল অ্যাডজাস্টমেন্ট যা style.css এ না থাকলেও কাজ করবে */
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; }
+        .badge-success { background: #28a745; color: white; }
+        .fraud-status { font-size: 11px; margin-top: 5px; color: #ff4757; }
+        .score-box { background: #1e272e; padding: 10px; border-radius: 8px; margin-top: 10px; border-left: 4px solid #f1c40f; }
+    </style>
 </head>
 <body>
 
     <div class="app-container">
         <header>
-            <h1 class="logo">Adzentra<span>Ads</span></h1>
-            <div id="user-mini-profile" style="display: none;">
-                <span id="top-balance" class="balance-badge">$0.0000</span>
+            <div class="header-main">
+                <h1 class="logo">Adzentra<span>Ads</span></h1>
+                <div id="user-header-info" style="display: flex; align-items: center; gap: 10px;">
+                    <span id="top-balance" class="balance-badge">$0.0000</span>
+                    <img id="header-avatar" src="assets/default-avatar.png" class="mini-avatar">
+                </div>
             </div>
         </header>
 
         <main id="main-content">
             <div id="loading-screen" class="status-box">
                 <div class="spinner"></div>
-                <p style="margin-top: 15px;">Securely Signing In...</p>
+                <p>Establishing Secure Connection...</p>
+                <small>Checking Fraud Protection System (v1.0)</small>
             </div>
 
             <div id="welcome-screen" class="status-box" style="display: none;">
                 <div class="profile-card">
-                    <img id="user-photo" src="assets/default-avatar.png" alt="Profile">
-                    <h2>Hello, <span id="user-name">Publisher</span>!</h2>
-                    <p class="verified-text">Verified Partner ✅</p>
+                    <div class="avatar-container">
+                        <img id="user-photo" src="assets/default-avatar.png" alt="Profile">
+                        <span class="status-dot"></span>
+                    </div>
+                    <h2>Welcome, <span id="user-name">Publisher</span></h2>
+                    <p class="user-tg-id">ID: <span id="tg-id-val">00000000</span></p>
+                    <div class="score-box">
+                        <span>Traffic Quality Score: <strong id="traffic-score">Excellent</strong></span>
+                    </div>
                 </div>
-                <button onclick="showSection('dashboard')" class="btn primary-btn">Open Dashboard</button>
+                <button onclick="showSection('dashboard')" class="btn primary-btn">Enter Dashboard</button>
             </div>
 
-            <div id="dashboard-section" style="display: none; padding-bottom: 100px;">
+            <div id="dashboard-section" class="content-section" style="display: none;">
                 <div class="main-balance-card">
-                    <h4>Available Balance</h4>
+                    <div class="card-header">
+                        <h4>Total Available Balance</h4>
+                        <i class="fa-solid fa-shield-halved text-success" title="Fraud Protection Active"></i>
+                    </div>
                     <div class="balance-amount" id="balance-val">$0.0000</div>
-                    <p class="refresh-text">Real-time Analytics</p>
+                    <div class="balance-stats">
+                        <span>Pending: <small id="pending-val">$0.00</small></span>
+                        <span>Lifetime: <small id="lifetime-val">$0.00</small></span>
+                    </div>
                 </div>
 
                 <div class="stats-grid">
                     <div class="stat-card">
                         <h5>Today Clicks</h5>
                         <span class="value blue" id="today-clicks">0</span>
+                        <small class="trend"><i class="fa-solid fa-arrow-up"></i> Real-time</small>
                     </div>
                     <div class="stat-card">
-                        <h5>Today Earnings</h5>
+                        <h5>Today Earning</h5>
                         <span class="value green" id="today-earning">$0.0000</span>
+                        <small class="trend">65% Share</small>
                     </div>
                     <div class="stat-card">
-                        <h5>Average CPM</h5>
-                        <span class="value" id="cpm-val">$1.50</span>
+                        <h5>Avg. CPM</h5>
+                        <span class="value" id="cpm-val">$0.00</span>
+                        <small>Based on GEO</small>
                     </div>
                     <div class="stat-card">
-                        <h5>Ref. Bonus</h5>
+                        <h5>Ref. Bonus (5%)</h5>
                         <span class="value yellow" id="ref-earning">$0.00</span>
+                        <small>Passive Income</small>
                     </div>
                 </div>
 
                 <div class="action-box">
-                    <h4>Create Smart Link</h4>
-                    <input type="url" id="target-url" placeholder="Enter Destination URL">
-                    <button class="btn-action" onclick="handleLinkCreation()">Generate Smart Link</button>
+                    <div class="box-title">
+                        <i class="fa-solid fa-link"></i>
+                        <h4>Create Monetized Smart Link</h4>
+                    </div>
+                    <p class="box-desc">Adzentra rotation engine selects the best CPM for your traffic.</p>
+                    <div class="input-group">
+                        <input type="url" id="target-url" placeholder="Paste your destination URL here...">
+                        <button class="btn-action" onclick="handleLinkCreation()">Generate</button>
+                    </div>
+                    
                     <div id="result-area" style="display:none; margin-top:15px;">
-                        <input type="text" id="final-link" readonly>
-                        <button class="btn-action copy-btn" onclick="copyToClipboard('final-link')">Copy Link</button>
+                        <div class="result-label">Your Monetized Link:</div>
+                        <div class="copy-container">
+                            <input type="text" id="final-link" readonly>
+                            <button class="copy-icon-btn" onclick="copyToClipboard('final-link')">
+                                <i class="fa-solid fa-copy"></i>
+                            </button>
+                        </div>
+                        <p class="fraud-status"><i class="fa-solid fa-circle-exclamation"></i> VPN/Bot traffic will be auto-rejected.</p>
                     </div>
                 </div>
 
                 <div class="action-box referral-box">
-                    <h4>Your Referral Link</h4>
-                    <input type="text" id="ref-link" readonly>
-                    <button class="btn-action ref-btn" onclick="copyToClipboard('ref-link')">Copy & Invite (5%)</button>
+                    <div class="box-title">
+                        <i class="fa-solid fa-users"></i>
+                        <h4>Referral Program</h4>
+                    </div>
+                    <p class="box-desc">Earn 5% lifetime commission from your friends' earnings.</p>
+                    <div class="copy-container">
+                        <input type="text" id="ref-link" readonly value="Loading...">
+                        <button class="copy-icon-btn" onclick="copyToClipboard('ref-link')">
+                            <i class="fa-solid fa-share-nodes"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
+
+            <div id="settings-section" class="content-section" style="display: none;">
+                <div class="action-box">
+                    <h4><i class="fa-solid fa-user-gear"></i> Account Settings</h4>
+                    <div class="setting-item">
+                        <span>Telegram Integration</span>
+                        <span class="badge badge-success">Connected</span>
+                    </div>
+                    <div class="setting-item">
+                        <span>Fraud Protection</span>
+                        <span class="badge badge-success">Active</span>
+                    </div>
+                    <hr>
+                    <div class="form-group">
+                        <label>Withdrawal Method (TRC20/Binance/TON)</label>
+                        <input type="text" id="wallet-address" placeholder="Enter your Wallet Address">
+                    </div>
+                    <button class="btn primary-btn" onclick="saveSettings()">Save Payment Info</button>
+                </div>
+            </div>
+
         </main>
 
         <nav id="bottom-nav" class="bottom-nav" style="display: none;">
-            <a href="javascript:void(0)" onclick="showSection('dashboard')" class="nav-item active">
-                <i class="fa-solid fa-house"></i>Home
+            <a href="javascript:void(0)" onclick="showSection('dashboard')" id="nav-home" class="nav-item active">
+                <i class="fa-solid fa-chart-pie"></i>
+                <span>Dashboard</span>
             </a>
-            <a href="withdraw.html" class="nav-item"><i class="fa-solid fa-wallet"></i>Withdraw</a>
-            <a href="analytics.html" class="nav-item"><i class="fa-solid fa-chart-line"></i>Stats</a>
+            <a href="analytics.html" id="nav-stats" class="nav-item">
+                <i class="fa-solid fa-globe"></i>
+                <span>Analytics</span>
+            </a>
+            <a href="withdraw.html" id="nav-wallet" class="nav-item">
+                <i class="fa-solid fa-wallet"></i>
+                <span>Withdraw</span>
+            </a>
+            <a href="javascript:void(0)" onclick="showSection('settings')" id="nav-settings" class="nav-item">
+                <i class="fa-solid fa-sliders"></i>
+                <span>Settings</span>
+            </a>
         </nav>
     </div>
 
     <script src="js/api.js"></script>
     <script src="js/app.js"></script>
     <script src="main.js"></script>
+    
+    <script>
+        // টেলিগ্রাম ডাটা হ্যান্ডলিং
+        const tele = window.Telegram.WebApp;
+        tele.expand();
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const user = tele.initDataUnsafe?.user;
+            if (user) {
+                // ইউজার নেম সেট করা (সম্পূর্ণ নাম)
+                document.getElementById('user-name').innerText = `${user.first_name} ${user.last_name || ''}`;
+                // টেলিগ্রাম আইডি সেট করা
+                document.getElementById('tg-id-val').innerText = user.id;
+                // প্রোফাইল পিকচার (শুধু শো করবে, ডাটাবেজে যাবে না)
+                if (user.photo_url) {
+                    document.getElementById('user-photo').src = user.photo_url;
+                    document.getElementById('header-avatar').src = user.photo_url;
+                }
+            }
+        });
+
+        function showSection(section) {
+            // সকল সেকশন হাইড করা
+            document.querySelectorAll('.content-section').forEach(s => s.style.display = 'none');
+            document.getElementById('welcome-screen').style.display = 'none';
+            
+            // টার্গেট সেকশন শো করা
+            document.getElementById(section + '-section').style.display = 'block';
+            
+            // ন্যাভিগেশন আইকন হাইলাইট
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById('nav-' + (section === 'dashboard' ? 'home' : section)).classList.add('active');
+        }
+    </script>
 
 </body>
 </html>
