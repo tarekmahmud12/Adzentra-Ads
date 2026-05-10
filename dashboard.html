@@ -1,0 +1,27 @@
+<!-- dashboard.html -->
+<div class="dashboard-wrapper">
+    <div class="stats-grid">
+        <div class="stat-card">
+            <span>Today Earnings</span>
+            <h3 id="today-earning">$0.00</h3>
+        </div>
+        <div class="stat-card">
+            <span>Total Clicks</span>
+            <h3 id="total-clicks">0</h3>
+        </div>
+        <div class="stat-card">
+            <span>Current CPM</span>
+            <h3 id="cpm">$1.50</h3>
+        </div>
+        <div class="stat-card highlight">
+            <span>Balance</span>
+            <h3 id="balance">$0.00</h3>
+        </div>
+    </div>
+    
+    <div class="quick-link-box">
+        <h4>Create Smart Link</h4>
+        <input type="text" id="target-url" placeholder="Enter your destination URL">
+        <button onclick="createLink()" class="btn-create">Generate</button>
+    </div>
+</div>

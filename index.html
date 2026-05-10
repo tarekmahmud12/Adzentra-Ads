@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adzentra Ads - Smart Link Network</title>
+    
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="dark-theme">
+    <div class="app-container">
+        <header>
+            <h1 class="logo">Adzentra<span>Ads</span></h1>
+        </header>
+        
+        <main class="hero">
+            <div id="loading-screen">
+                <div class="spinner"></div>
+                <p>Connecting to Telegram...</p>
+            </div>
+
+            <div id="welcome-screen" style="display: none;">
+                <div class="user-profile">
+                    <img id="user-photo" src="" alt="" style="width: 80px; border-radius: 50%; display: none;">
+                    <h2>Welcome, <span id="user-name">Publisher</span>!</h2>
+                </div>
+                <p>Monetize Your Traffic via <br><span>Smart Links</span></p>
+                <div class="cta-btns">
+                    <a href="dashboard.html" class="btn primary">Go to Dashboard</a>
+                </div>
+            </div>
+
+            <div id="error-screen" style="display: none;">
+                <h2 style="color: #ff4d4d;">Access Denied</h2>
+                <p>Please open this app from inside Telegram.</p>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+        async function initApp() {
+            const loading = document.getElementById('loading-screen');
+            const welcome = document.getElementById('welcome-screen');
+            const errorDiv = document.getElementById('error-screen');
+
+            // api.js এর ফাংশন কল করা
+            try {
+                const user = await syncTelegramUser();
+                
+                if (user) {
+                    loading.style.display = 'none';
+                    welcome.style.display = 'block';
+                    
+                    // ইউজারের তথ্য দেখানো
+                    document.getElementById('user-name').innerText = user.full_name.split(' ')[0];
+                    if (user.profile_pic) {
+                        const img = document.getElementById('user-photo');
+                        img.src = user.profile_pic;
+                        img.style.display = 'inline-block';
+                    }
+                    
+                    // ৩ সেকেন্ড পর অটো ড্যাশবোর্ডে নিয়ে যেতে চাইলে নিচের লাইনটি আনকমেন্ট করুন
+                    // setTimeout(() => { window.location.href = 'dashboard.html'; }, 3000);
+                } else {
+                    loading.style.display = 'none';
+                    errorDiv.style.display = 'block';
+                }
+            } catch (err) {
+                console.error(err);
+                loading.style.display = 'none';
+                errorDiv.style.display = 'block';
+            }
+        }
+
+        // অ্যাপ লোড হলে রান হবে
+        window.onload = initApp;
+    </script>
+
+    <style>
+        /* লোডিং স্পিনার ডিজাইন */
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-left-color: #0088cc;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .user-profile { margin-bottom: 20px; }
+        #user-photo { border: 3px solid #0088cc; margin-bottom: 10px; }
+    </style>
+</body>
+</html>
