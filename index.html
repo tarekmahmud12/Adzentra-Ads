@@ -1,23 +1,26 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bn">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Adzentra Ads - Professional Smart Link Ad Network</title>
+    <title>Adzentra Ads - Publisher Dashboard</title>
     
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
+    
     <style>
-        /* দ্রুত কিছু স্টাইল অ্যাডজাস্টমেন্ট যা style.css এ না থাকলেও কাজ করবে */
-        .badge { padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; }
+        :root {
+            --primary: #00d4ff;
+        }
+        .badge { padding: 4px 8px; border-radius: 20px; font-size: 12px; font-weight: 600; }
         .badge-success { background: #28a745; color: white; }
-        .fraud-status { font-size: 11px; margin-top: 5px; color: #ff4757; }
-        .score-box { background: #1e272e; padding: 10px; border-radius: 8px; margin-top: 10px; border-left: 4px solid #f1c40f; }
+        .score-box { background: #1e272e; padding: 12px; border-radius: 12px; border-left: 5px solid #f1c40f; }
+        .stat-card { background: #16213e; border-radius: 12px; padding: 14px; text-align: center; }
+        .nav-item.active { color: var(--primary); border-top: 3px solid var(--primary); }
     </style>
 </head>
 <body>
@@ -26,20 +29,23 @@
         <header>
             <div class="header-main">
                 <h1 class="logo">Adzentra<span>Ads</span></h1>
-                <div id="user-header-info" style="display: flex; align-items: center; gap: 10px;">
-                    <span id="top-balance" class="balance-badge">$0.0000</span>
-                    <img id="header-avatar" src="assets/default-avatar.png" class="mini-avatar">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <span id="top-balance" class="balance-badge">$0.00</span>
+                    <img id="header-avatar" src="assets/default-avatar.png" class="mini-avatar" alt="Avatar">
                 </div>
             </div>
         </header>
 
         <main id="main-content">
+            
+            <!-- Loading Screen -->
             <div id="loading-screen" class="status-box">
                 <div class="spinner"></div>
                 <p>Establishing Secure Connection...</p>
-                <small>Checking Fraud Protection System (v1.0)</small>
+                <small>Fraud Protection System v1.0 • Checking Traffic</small>
             </div>
 
+            <!-- Welcome Screen -->
             <div id="welcome-screen" class="status-box" style="display: none;">
                 <div class="profile-card">
                     <div class="avatar-container">
@@ -47,19 +53,21 @@
                         <span class="status-dot"></span>
                     </div>
                     <h2>Welcome, <span id="user-name">Publisher</span></h2>
-                    <p class="user-tg-id">ID: <span id="tg-id-val">00000000</span></p>
+                    <p class="user-tg-id">TG ID: <span id="tg-id-val">000000000</span></p>
+                    
                     <div class="score-box">
-                        <span>Traffic Quality Score: <strong id="traffic-score">Excellent</strong></span>
+                        <span>Traffic Quality Score: <strong id="traffic-score" style="color:#f1c40f;">Excellent</strong></span>
                     </div>
                 </div>
                 <button onclick="showSection('dashboard')" class="btn primary-btn">Enter Dashboard</button>
             </div>
 
-            <div id="dashboard-section" class="content-section" style="display: none;">
+            <!-- ==================== DASHBOARD ==================== -->
+            <div id="dashboard-section" class="content-section">
                 <div class="main-balance-card">
                     <div class="card-header">
                         <h4>Total Available Balance</h4>
-                        <i class="fa-solid fa-shield-halved text-success" title="Fraud Protection Active"></i>
+                        <i class="fa-solid fa-shield-halved text-success"></i>
                     </div>
                     <div class="balance-amount" id="balance-val">$0.0000</div>
                     <div class="balance-stats">
@@ -72,101 +80,161 @@
                     <div class="stat-card">
                         <h5>Today Clicks</h5>
                         <span class="value blue" id="today-clicks">0</span>
-                        <small class="trend"><i class="fa-solid fa-arrow-up"></i> Real-time</small>
                     </div>
                     <div class="stat-card">
-                        <h5>Today Earning</h5>
-                        <span class="value green" id="today-earning">$0.0000</span>
-                        <small class="trend">65% Share</small>
+                        <h5>Today Earnings</h5>
+                        <span class="value green" id="today-earning">$0.00</span>
                     </div>
                     <div class="stat-card">
                         <h5>Avg. CPM</h5>
                         <span class="value" id="cpm-val">$0.00</span>
-                        <small>Based on GEO</small>
+                    </div>
+                    <div class="stat-card">
+                        <h5>Total Impressions</h5>
+                        <span class="value" id="total-impressions">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <h5>CTR</h5>
+                        <span class="value" id="ctr-val">0.00%</span>
                     </div>
                     <div class="stat-card">
                         <h5>Ref. Bonus (5%)</h5>
                         <span class="value yellow" id="ref-earning">$0.00</span>
-                        <small>Passive Income</small>
                     </div>
                 </div>
 
+                <!-- Smart Link Creator -->
                 <div class="action-box">
                     <div class="box-title">
                         <i class="fa-solid fa-link"></i>
-                        <h4>Create Monetized Smart Link</h4>
+                        <h4>Create Smart Link</h4>
                     </div>
-                    <p class="box-desc">Adzentra rotation engine selects the best CPM for your traffic.</p>
+                    <p class="box-desc">Smart Rotation Engine • Best CPM Selection • Fraud Protected</p>
+                    
                     <div class="input-group">
-                        <input type="url" id="target-url" placeholder="Paste your destination URL here...">
-                        <button class="btn-action" onclick="handleLinkCreation()">Generate</button>
+                        <input type="url" id="target-url" placeholder="Paste your original URL here...">
+                        <button class="btn-action" onclick="handleLinkCreation()">Generate Monetized Link</button>
                     </div>
                     
                     <div id="result-area" style="display:none; margin-top:15px;">
-                        <div class="result-label">Your Monetized Link:</div>
+                        <div class="result-label">Your Monetized Smart Link:</div>
                         <div class="copy-container">
                             <input type="text" id="final-link" readonly>
-                            <button class="copy-icon-btn" onclick="copyToClipboard('final-link')">
-                                <i class="fa-solid fa-copy"></i>
-                            </button>
+                            <button class="copy-icon-btn" onclick="copyToClipboard('final-link')"><i class="fa-solid fa-copy"></i></button>
                         </div>
-                        <p class="fraud-status"><i class="fa-solid fa-circle-exclamation"></i> VPN/Bot traffic will be auto-rejected.</p>
+                        <p class="fraud-status"><i class="fa-solid fa-circle-check"></i> VPN / Bot / Fake traffic will be blocked automatically.</p>
                     </div>
                 </div>
 
-                <div class="action-box referral-box">
-                    <div class="box-title">
-                        <i class="fa-solid fa-users"></i>
-                        <h4>Referral Program</h4>
+                <!-- Quick Links -->
+                <div class="quick-links">
+                    <a href="javascript:void(0)" onclick="showSection('links')" class="quick-btn">
+                        <i class="fa-solid fa-list"></i><br> My Links
+                    </a>
+                    <a href="javascript:void(0)" onclick="showSection('analytics')" class="quick-btn">
+                        <i class="fa-solid fa-chart-line"></i><br> Analytics
+                    </a>
+                    <a href="javascript:void(0)" onclick="showSection('withdraw')" class="quick-btn">
+                        <i class="fa-solid fa-wallet"></i><br> Withdraw
+                    </a>
+                </div>
+            </div>
+
+            <!-- ==================== MY LINKS SECTION ==================== -->
+            <div id="links-section" class="content-section" style="display: none;">
+                <h3><i class="fa-solid fa-link"></i> My Smart Links</h3>
+                <div id="links-list">
+                    <!-- Dynamic links will be loaded here via JS -->
+                    <p style="text-align:center; color:#888; padding:20px;">No links created yet.</p>
+                </div>
+            </div>
+
+            <!-- ==================== ANALYTICS SECTION ==================== -->
+            <div id="analytics-section" class="content-section" style="display: none;">
+                <h3><i class="fa-solid fa-chart-bar"></i> Detailed Analytics</h3>
+                <div class="stats-grid">
+                    <div class="stat-card"><strong>Daily Stats</strong></div>
+                    <div class="stat-card"><strong>Country Stats</strong></div>
+                    <div class="stat-card"><strong>Device Stats</strong></div>
+                    <div class="stat-card"><strong>Browser Stats</strong></div>
+                </div>
+                <p style="text-align:center; margin-top:20px; color:#00d4ff;">Full analytics coming soon with charts...</p>
+            </div>
+
+            <!-- ==================== WITHDRAW SECTION ==================== -->
+            <div id="withdraw-section" class="content-section" style="display: none;">
+                <h3><i class="fa-solid fa-wallet"></i> Withdraw Earnings</h3>
+                
+                <div class="action-box">
+                    <label>Withdrawal Method</label>
+                    <select id="withdraw-method" class="input-field">
+                        <option value="USDT_TRC20">USDT TRC20</option>
+                        <option value="USDT_BEP20">USDT BEP20</option>
+                        <option value="BinancePay">Binance Pay</option>
+                        <option value="TON">TON Wallet</option>
+                    </select>
+                    
+                    <div class="form-group">
+                        <label>Wallet Address</label>
+                        <input type="text" id="wallet-address" placeholder="Enter your wallet address">
                     </div>
-                    <p class="box-desc">Earn 5% lifetime commission from your friends' earnings.</p>
-                    <div class="copy-container">
-                        <input type="text" id="ref-link" readonly value="Loading...">
-                        <button class="copy-icon-btn" onclick="copyToClipboard('ref-link')">
-                            <i class="fa-solid fa-share-nodes"></i>
-                        </button>
+                    
+                    <button class="btn primary-btn" style="width:100%; margin-top:15px;" onclick="requestWithdraw()">
+                        Request Withdrawal
+                    </button>
+                </div>
+
+                <div class="action-box">
+                    <h4>Withdrawal History</h4>
+                    <div id="withdraw-history">
+                        <p style="color:#888; text-align:center;">No withdrawals yet</p>
                     </div>
                 </div>
             </div>
 
+            <!-- ==================== SETTINGS SECTION ==================== -->
             <div id="settings-section" class="content-section" style="display: none;">
+                <h3><i class="fa-solid fa-gear"></i> Account Settings</h3>
                 <div class="action-box">
-                    <h4><i class="fa-solid fa-user-gear"></i> Account Settings</h4>
                     <div class="setting-item">
-                        <span>Telegram Integration</span>
+                        <span>Telegram Account</span>
                         <span class="badge badge-success">Connected</span>
                     </div>
                     <div class="setting-item">
                         <span>Fraud Protection</span>
                         <span class="badge badge-success">Active</span>
                     </div>
+                    <div class="setting-item">
+                        <span>2FA Security</span>
+                        <button class="btn small-btn">Enable</button>
+                    </div>
+                    
                     <hr>
                     <div class="form-group">
-                        <label>Withdrawal Method (TRC20/Binance/TON)</label>
-                        <input type="text" id="wallet-address" placeholder="Enter your Wallet Address">
+                        <label>Payment Wallet Address</label>
+                        <input type="text" id="payment-wallet" placeholder="USDT / TON Address">
                     </div>
-                    <button class="btn primary-btn" onclick="saveSettings()">Save Payment Info</button>
+                    <button class="btn primary-btn" onclick="saveSettings()">Save Settings</button>
                 </div>
             </div>
-
         </main>
 
-        <nav id="bottom-nav" class="bottom-nav" style="display: none;">
-            <a href="javascript:void(0)" onclick="showSection('dashboard')" id="nav-home" class="nav-item active">
-                <i class="fa-solid fa-chart-pie"></i>
-                <span>Dashboard</span>
+        <!-- Bottom Navigation -->
+        <nav id="bottom-nav" class="bottom-nav">
+            <a href="javascript:void(0)" onclick="showSection('dashboard')" class="nav-item active" id="nav-dashboard">
+                <i class="fa-solid fa-house"></i><span>Home</span>
             </a>
-            <a href="analytics.html" id="nav-stats" class="nav-item">
-                <i class="fa-solid fa-globe"></i>
-                <span>Analytics</span>
+            <a href="javascript:void(0)" onclick="showSection('links')" class="nav-item" id="nav-links">
+                <i class="fa-solid fa-link"></i><span>Links</span>
             </a>
-            <a href="withdraw.html" id="nav-wallet" class="nav-item">
-                <i class="fa-solid fa-wallet"></i>
-                <span>Withdraw</span>
+            <a href="javascript:void(0)" onclick="showSection('analytics')" class="nav-item" id="nav-analytics">
+                <i class="fa-solid fa-chart-line"></i><span>Stats</span>
             </a>
-            <a href="javascript:void(0)" onclick="showSection('settings')" id="nav-settings" class="nav-item">
-                <i class="fa-solid fa-sliders"></i>
-                <span>Settings</span>
+            <a href="javascript:void(0)" onclick="showSection('withdraw')" class="nav-item" id="nav-withdraw">
+                <i class="fa-solid fa-wallet"></i><span>Wallet</span>
+            </a>
+            <a href="javascript:void(0)" onclick="showSection('settings')" class="nav-item" id="nav-settings">
+                <i class="fa-solid fa-gear"></i><span>Settings</span>
             </a>
         </nav>
     </div>
@@ -174,40 +242,63 @@
     <script src="js/api.js"></script>
     <script src="js/app.js"></script>
     <script src="main.js"></script>
-    
+
     <script>
-        // টেলিগ্রাম ডাটা হ্যান্ডলিং
         const tele = window.Telegram.WebApp;
         tele.expand();
+        tele.ready();
 
         document.addEventListener('DOMContentLoaded', () => {
             const user = tele.initDataUnsafe?.user;
             if (user) {
-                // ইউজার নেম সেট করা (সম্পূর্ণ নাম)
-                document.getElementById('user-name').innerText = `${user.first_name} ${user.last_name || ''}`;
-                // টেলিগ্রাম আইডি সেট করা
+                document.getElementById('user-name').innerText = user.first_name + (user.last_name ? ' ' + user.last_name : '');
                 document.getElementById('tg-id-val').innerText = user.id;
-                // প্রোফাইল পিকচার (শুধু শো করবে, ডাটাবেজে যাবে না)
+                
                 if (user.photo_url) {
                     document.getElementById('user-photo').src = user.photo_url;
                     document.getElementById('header-avatar').src = user.photo_url;
                 }
             }
+            
+            // Show welcome first then dashboard
+            setTimeout(() => {
+                document.getElementById('loading-screen').style.display = 'none';
+                document.getElementById('welcome-screen').style.display = 'block';
+            }, 1500);
         });
 
         function showSection(section) {
-            // সকল সেকশন হাইড করা
             document.querySelectorAll('.content-section').forEach(s => s.style.display = 'none');
-            document.getElementById('welcome-screen').style.display = 'none';
-            
-            // টার্গেট সেকশন শো করা
             document.getElementById(section + '-section').style.display = 'block';
-            
-            // ন্যাভিগেশন আইকন হাইলাইট
+
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            document.getElementById('nav-' + (section === 'dashboard' ? 'home' : section)).classList.add('active');
+            document.getElementById('nav-' + section).classList.add('active');
+        }
+
+        // Placeholder functions
+        function handleLinkCreation() {
+            const url = document.getElementById('target-url').value;
+            if (!url) return alert("Please enter a valid URL");
+            
+            const generated = "https://adzentrads.com/s/" + Math.random().toString(36).substring(2, 10);
+            document.getElementById('final-link').value = generated;
+            document.getElementById('result-area').style.display = 'block';
+        }
+
+        function copyToClipboard(id) {
+            const el = document.getElementById(id);
+            el.select();
+            document.execCommand('copy');
+            alert("✅ Link Copied!");
+        }
+
+        function requestWithdraw() {
+            alert("✅ Withdrawal request submitted! (Demo)");
+        }
+
+        function saveSettings() {
+            alert("✅ Settings Saved Successfully!");
         }
     </script>
-
 </body>
-</html>
+    </html>
