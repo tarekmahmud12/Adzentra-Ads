@@ -7,112 +7,50 @@
     
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     
-    <style>
-        :root {
-            --bg-color: #f4f7fe;
-            --sidebar-bg: #ffffff;
-            --primary: #4318ff;
-            --text-main: #1b2559;
-            --text-secondary: #a3adc2;
-            --card-shadow: 0px 18px 40px rgba(112, 144, 176, 0.12);
-        }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
-        body { background-color: var(--bg-color); color: var(--text-main); }
-
-        /* Top Header */
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 20px;
-            background: #fff;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-        .header-left { display: flex; align-items: center; gap: 15px; }
-        .menu-btn { font-size: 20px; cursor: pointer; color: var(--text-main); }
-        .logo { font-size: 22px; font-weight: 700; color: var(--primary); }
-        .logo span { color: #1b2559; }
-        .user-profile-img { width: 40px; height: 40px; border-radius: 50%; cursor: pointer; object-fit: cover; }
-
-        /* Sidebar Menu */
-        #sidebar {
-            position: fixed;
-            left: -280px;
-            top: 0;
-            width: 280px;
-            height: 100%;
-            background: var(--sidebar-bg);
-            box-shadow: 10px 0 30px rgba(0,0,0,0.05);
-            transition: 0.3s;
-            z-index: 1000;
-            padding-top: 20px;
-        }
-        #sidebar.active { left: 0; }
-        .sidebar-item {
-            padding: 15px 25px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            color: var(--text-secondary);
-            text-decoration: none;
-            font-weight: 500;
-            cursor: pointer;
-        }
-        .sidebar-item i { width: 20px; }
-        .sidebar-item:hover, .sidebar-item.active { color: var(--primary); background: #f4f7fe; border-right: 4px solid var(--primary); }
-        .coming-soon { font-size: 10px; background: #eee; padding: 2px 6px; border-radius: 4px; margin-left: auto; }
-
-        /* Dashboard Content */
-        .container { padding: 20px; }
-        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 20px; }
-        .stat-card {
-            background: #fff;
-            padding: 20px;
-            border-radius: 20px;
-            box-shadow: var(--card-shadow);
-            text-align: left;
-        }
-        .stat-card h5 { color: var(--text-secondary); font-size: 12px; margin-bottom: 5px; }
-        .stat-card .value { font-size: 20px; font-weight: 700; }
-        .text-green { color: #05cd99; }
-
-        /* Section Styling */
-        .content-section { display: none; }
-        .active-section { display: block; }
-
-        /* Buttons and Inputs */
-        .action-card { background: #fff; padding: 20px; border-radius: 20px; margin-top: 20px; box-shadow: var(--card-shadow); }
-        .input-field { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #e0e5f2; margin-top: 10px; }
-        .primary-btn { background: var(--primary); color: #fff; padding: 12px; border: none; border-radius: 12px; width: 100%; font-weight: 600; cursor: pointer; margin-top: 10px; }
-
-        /* Overlay */
-        #overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); z-index: 999; }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <div id="overlay" onclick="toggleSidebar()"></div>
 
     <div id="sidebar">
-        <div style="padding: 0 25px 20px; font-weight: 800; font-size: 20px; border-bottom: 1px solid #eee;">
-            <i class="fa-solid fa-xmark" style="float: right; cursor: pointer;" onclick="toggleSidebar()"></i>
+        <div class="sidebar-header">
             Adzentra <span style="color: var(--primary);">Ads</span>
+            <i class="fa-solid fa-xmark" style="cursor: pointer;" onclick="toggleSidebar()"></i>
         </div>
-        <div class="sidebar-item active" onclick="showSection('dashboard')"><i class="fa-solid fa-house"></i> Dashboard</div>
-        <div class="sidebar-item" onclick="showSection('direct-link')"><i class="fa-solid fa-link"></i> Direct Links</div>
-        <div class="sidebar-item" onclick="showSection('websites')"><i class="fa-solid fa-globe"></i> My Websites</div>
-        <div class="sidebar-item"><i class="fa-solid fa-bullhorn"></i> Telegram Channels <span class="coming-soon">Soon</span></div>
-        <div class="sidebar-item"><i class="fa-solid fa-mobile-screen"></i> My Apps <span class="coming-soon">Soon</span></div>
-        <div class="sidebar-item" onclick="showSection('analytics')"><i class="fa-solid fa-chart-line"></i> Statistics</div>
-        <div class="sidebar-item" onclick="showSection('withdraw')"><i class="fa-solid fa-wallet"></i> Withdraw</div>
-        <div class="sidebar-item" onclick="showSection('profile')"><i class="fa-solid fa-user"></i> My Profile</div>
-        <div class="sidebar-item" style="margin-top: 50px; color: #ff4d4d;"><i class="fa-solid fa-right-from-bracket"></i> Logout</div>
+        
+        <div class="sidebar-item active" onclick="showSection('dashboard')">
+            <i class="fa-solid fa-house"></i> Dashboard
+        </div>
+        <div class="sidebar-item" onclick="showSection('direct-link')">
+            <i class="fa-solid fa-link"></i> Direct Links
+        </div>
+        <div class="sidebar-item" onclick="showSection('websites')">
+            <i class="fa-solid fa-globe"></i> My Websites
+        </div>
+        <div class="sidebar-item">
+            <i class="fa-solid fa-bullhorn"></i> Telegram Channels <span class="coming-soon">Soon</span>
+        </div>
+        <div class="sidebar-item">
+            <i class="fa-solid fa-mobile-screen"></i> My Apps <span class="coming-soon">Soon</span>
+        </div>
+        <div class="sidebar-item" onclick="showSection('analytics')">
+            <i class="fa-solid fa-chart-line"></i> Statistics
+        </div>
+        <div class="sidebar-item" onclick="showSection('withdraw')">
+            <i class="fa-solid fa-wallet"></i> Withdraw
+        </div>
+        <div class="sidebar-item" onclick="showSection('profile')">
+            <i class="fa-solid fa-user"></i> My Profile
+        </div>
+        
+        <div class="sidebar-item" style="margin-top: 50px; color: var(--danger);">
+            <i class="fa-solid fa-right-from-bracket"></i> Logout
+        </div>
     </div>
 
     <header>
@@ -123,25 +61,25 @@
         <img id="user-avatar" src="https://via.placeholder.com/100" class="user-profile-img" onclick="showSection('profile')" alt="Profile">
     </header>
 
-    <div class="container">
+    <div class="container" id="main-content">
         
         <div id="dashboard-section" class="content-section active-section">
             <div class="stats-grid">
                 <div class="stat-card">
                     <h5>Current Balance</h5>
-                    <div class="value" id="balance-val">$21.43</div>
+                    <div class="value" id="balance-val">$0.00</div>
                 </div>
                 <div class="stat-card">
                     <h5>Total Earnings</h5>
-                    <div class="value text-green" id="lifetime-val">$21.43</div>
+                    <div class="value text-green" id="lifetime-val">$0.00</div>
                 </div>
                 <div class="stat-card">
                     <h5>Total Impressions</h5>
-                    <div class="value">483</div>
+                    <div class="value">0</div>
                 </div>
                 <div class="stat-card">
                     <h5>Clicks</h5>
-                    <div class="value">8</div>
+                    <div class="value">0</div>
                 </div>
             </div>
             
@@ -167,60 +105,72 @@
             </div>
         </div>
 
+        <div id="analytics-section" class="content-section">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h5>Total Impressions</h5>
+                    <div class="value">0</div>
+                </div>
+                <div class="stat-card">
+                    <h5>Total Clicks</h5>
+                    <div class="value">0</div>
+                </div>
+            </div>
+
+            <div class="action-card" style="padding: 15px; overflow-x: auto;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h4 style="margin:0;">Daily Performance</h4>
+                    <button class="badge badge-success" style="border:none;">View All</button>
+                </div>
+                <table style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: left;">
+                    <thead>
+                        <tr style="color: var(--text-dim); border-bottom: 1px solid var(--border);">
+                            <th style="padding: 10px 5px;">DATE</th>
+                            <th style="padding: 10px 5px;">IMPRESSIONS</th>
+                            <th style="padding: 10px 5px;">CLICKS</th>
+                            <th style="padding: 10px 5px;">CPM</th>
+                            <th style="padding: 10px 5px;">REVENUE</th>
+                        </tr>
+                    </thead>
+                    <tbody id="analytics-table-body">
+                        <tr>
+                            <td colspan="5" style="text-align:center; padding: 20px; color: var(--text-dim);">No data available yet</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="withdraw-section" class="content-section">
+            <div class="action-card">
+                <h3><i class="fa-solid fa-wallet"></i> Withdraw</h3>
+                <input type="number" class="input-field" placeholder="Enter Amount ($)">
+                <select class="input-field">
+                    <option value="usdt">USDT (TRC20)</option>
+                    <option value="payeer">Payeer</option>
+                    <option value="binance">Binance Pay</option>
+                </select>
+                <button class="primary-btn">Request Payout</button>
+            </div>
+        </div>
+
         <div id="profile-section" class="content-section">
             <div class="action-card" style="text-align: center;">
-                <img id="profile-pic-large" src="https://via.placeholder.com/100" style="width: 100px; border-radius: 50%; margin-bottom: 15px;">
-                <h2 id="p-name">MD TAREK</h2>
-                <p style="color: var(--text-secondary);">@tarek_username</p>
-                <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
-                <div style="text-align: left; line-height: 2;">
-                    <p><strong>User ID:</strong> <span id="p-id">6158524458</span></p>
-                    <p><strong>Total Earnings:</strong> $21.43</p>
-                    <p><strong>Last Payout:</strong> $0.00</p>
-                    <p><strong>Balance After Last Payout:</strong> $21.43</p>
+                <img id="profile-pic-large" src="https://via.placeholder.com/100" style="width: 100px; border-radius: 50%; border: 3px solid var(--primary); margin-bottom: 15px;">
+                <h2 id="p-name">Loading...</h2>
+                <p id="p-username" style="color: var(--text-dim);">@username</p>
+                
+                <div class="profile-info-list">
+                    <p><strong>User ID:</strong> <span id="p-id">0000000000</span></p>
+                    <p><strong>Current Balance:</strong> <span id="p-balance">$0.00</span></p>
+                    <p><strong>Total Withdrawn:</strong> <span>$0.00</span></p>
+                    <p><strong>Traffic Quality:</strong> <span class="badge badge-success">Excellent</span></p>
                 </div>
             </div>
         </div>
 
-        </div>
+    </div>
 
-    <script>
-        // Sidebar Toggle
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('overlay');
-            sidebar.classList.toggle('active');
-            overlay.style.display = sidebar.classList.contains('active') ? 'block' : 'none';
-        }
-
-        // Section Navigation
-        function showSection(sectionId) {
-            document.querySelectorAll('.content-section').forEach(sec => sec.classList.remove('active-section'));
-            document.getElementById(sectionId + '-section').classList.add('active-section');
-            
-            // Sidebar auto close on mobile
-            toggleSidebar();
-
-            // Update Active Menu
-            document.querySelectorAll('.sidebar-item').forEach(item => item.classList.remove('active'));
-            // logic to find the item and add active
-        }
-
-        // Telegram Integration
-        const tele = window.Telegram.WebApp;
-        tele.expand();
-
-        document.addEventListener('DOMContentLoaded', () => {
-            const user = tele.initDataUnsafe?.user;
-            if (user) {
-                document.getElementById('p-name').innerText = user.first_name + " " + (user.last_name || "");
-                document.getElementById('p-id').innerText = user.id;
-                if(user.photo_url) {
-                    document.getElementById('user-avatar').src = user.photo_url;
-                    document.getElementById('profile-pic-large').src = user.photo_url;
-                }
-            }
-        });
-    </script>
+    <script src="main.js"></script>
 </body>
 </html>
