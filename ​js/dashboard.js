@@ -29,7 +29,7 @@ async function handleLinkCreation() {
         const finalCode = `${shortCode}_${alias}`;
         
         // আপনার Vercel Backend URL
-        const backendBaseURL = "https://your-vercel-app.vercel.app/r/"; 
+        const backendBaseURL = "https://adzentra-kworig5a4-md-tarek-s-projects.vercel.app/r/"; 
         const finalTrackingLink = backendBaseURL + finalCode;
 
         // সুপাবাস 'links' টেবিলে সেভ করা
