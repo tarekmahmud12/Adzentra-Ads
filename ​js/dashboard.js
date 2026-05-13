@@ -1,31 +1,35 @@
 /**
- * Adzentra Ads - Professional Dashboard Logic (v2.1)
- * Updated: Sidebar Support, Detailed Analytics, & Global UI Sync
+ * Adzentra Ads - Professional Dashboard Logic (v2.2)
+ * Tracking Layer Integration & Global UI Sync
  */
 
-// ১. স্মার্ট লিংক জেনারেশন (উন্নত লজিক)
+// ১. স্মার্ট লিংক জেনারেশন (উন্নত ট্র্যাকিং লজিক যুক্ত)
 async function handleLinkCreation() {
     const urlInput = document.getElementById('target-url');
-    const resultArea = document.getElementById('result-area'); // যদি থাকে
-    const finalLinkInput = document.getElementById('final-link'); // যদি থাকে
+    const resultArea = document.getElementById('result-area'); 
+    const finalLinkInput = document.getElementById('final-link'); 
     
     const originalUrl = urlInput.value.trim();
     
+    // ভ্যালিডেশন: এখানে পাবলিশার তার Monetag/Adsterra স্মার্ট লিঙ্ক দিবে
     if(!originalUrl || !originalUrl.startsWith('http')) {
-        return window.Telegram.WebApp.showAlert("❌ Please enter a valid URL (starting with http/https)");
+        return window.Telegram.WebApp.showAlert("❌ Please enter a valid Ad URL!");
     }
 
     try {
+        // ইউনিক শর্ট কোড জেনারেট (Tracking ID)
         const shortCode = Math.random().toString(36).substring(2, 8).toUpperCase();
         
-        // আপনার Vercel/Backend URL
+        // আপনার Vercel Backend URL (যেখানে ভিজিটর প্রথমে হিট করবে)
+        // উদাহরণ: https://adzentra-api.vercel.app/r/
         const backendBaseURL = "https://your-vercel-app.vercel.app/r/"; 
-        const finalSmartLink = backendBaseURL + shortCode;
+        const finalTrackingLink = backendBaseURL + shortCode;
 
+        // সুপাবাস 'links' টেবিলে সেভ করা
         const { error } = await supabase
             .from('links')
             .insert([{ 
-                original_url: originalUrl, 
+                original_url: originalUrl, // এটিই আপনার Advertiser Link (Monetag/Adsterra)
                 short_code: shortCode,
                 publisher_id: currentUser.id,
                 created_at: new Date()
@@ -33,17 +37,17 @@ async function handleLinkCreation() {
 
         if(error) throw error;
 
-        // UI আপডেট ও এলার্ট
+        // UI আপডেট
         if(resultArea) resultArea.style.display = 'block';
-        if(finalLinkInput) finalLinkInput.value = finalSmartLink;
+        if(finalLinkInput) finalLinkInput.value = finalTrackingLink;
         
         urlInput.value = "";
         window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
-        window.Telegram.WebApp.showAlert("🚀 Smart Link Created!\n" + finalSmartLink);
+        window.Telegram.WebApp.showAlert("🚀 Tracking Link Created!\nShare this link to earn.");
 
     } catch (err) {
         console.error("Link Creation Error:", err.message);
-        window.Telegram.WebApp.showAlert("Error: Could not save link.");
+        window.Telegram.WebApp.showAlert("Error: Could not save tracking link.");
     }
 }
 
@@ -54,7 +58,7 @@ async function loadStats() {
     try {
         const today = new Date().toISOString().split('T')[0];
 
-        // ক) আজকের এবং মোট ক্লিক ডাটা আনা
+        // ক) 'clicks' টেবিল থেকে পাবলিশারের সব ট্রাফিক ডাটা আনা
         const { data: statsData, error: statsError } = await supabase
             .from('clicks')
             .select('*')
@@ -70,19 +74,21 @@ async function loadStats() {
         if (statsError || profileError) throw statsError || profileError;
 
         // ৩. ক্যালকুলেশন লজিক
-        const todayClicksArr = statsData.filter(c => c.created_at.startsWith(today));
-        const totalClicks = statsData.length;
-        const todayClicks = todayClicksArr.length;
+        const todayClicksArr = statsData ? statsData.filter(c => c.created_at.startsWith(today)) : [];
+        const totalImpressions = statsData ? statsData.length : 0;
+        const todayImpressions = todayClicksArr.length;
+        
+        // রেভিনিউ ক্যালকুলেশন (পাবলিশার শেয়ার এর যোগফল)
         const earningsToday = todayClicksArr.reduce((sum, c) => sum + parseFloat(c.publisher_share || 0), 0);
         
-        // ৪. গ্লোবাল UI আপডেট (Sidebar, Header এবং সব সেকশন)
+        // ৪. গ্লোবাল UI আপডেট
         updateText('balance-val', `$${parseFloat(profile.balance || 0).toFixed(4)}`);
         updateText('top-balance', `$${parseFloat(profile.balance || 0).toFixed(4)}`);
         updateText('p-balance', `$${parseFloat(profile.balance || 0).toFixed(4)}`);
         
-        // ড্যাশবোর্ড কার্ডস
-        updateText('today-clicks', todayClicks);
-        updateText('total-clicks-val', totalClicks);
+        // ড্যাশবোর্ড কার্ডস আপডেট
+        updateText('dash-imp', totalImpressions); // Impressions/Total Clicks
+        updateText('today-imp', todayImpressions); 
         updateText('lifetime-val', `$${parseFloat(profile.lifetime_earnings || 0).toFixed(2)}`);
 
         // প্রোফাইল সেকশন
@@ -90,31 +96,23 @@ async function loadStats() {
         updateText('p-id', profile.id);
         updateText('p-username', `@${profile.username || 'user'}`);
 
-        // ৫. এনালাইটিক্স টেবিল আপডেট (Statistics Section)
-        renderAnalyticsTable(statsData);
-
-        // ৬. রেফারেল লিংক আপডেট
-        const refLinkInput = document.getElementById('ref-link');
-        if(refLinkInput) {
-            refLinkInput.value = `https://t.me/AdzentraAdsBot?start=ref_${profile.id}`;
-        }
+        // ৫. এনালাইটিক্স টেবিল রেন্ডার
+        renderAnalyticsTable(statsData || []);
 
     } catch (err) {
         console.error("Dashboard Sync Error:", err.message);
     }
 }
 
-// ৭. এনালাইটিক্স টেবিল রেন্ডারিং ফাংশন
+// ৭. এনালাইটিক্স টেবিল রেন্ডারিং
 function renderAnalyticsTable(data) {
     const tableBody = document.getElementById('analytics-table-body');
     if(!tableBody) return;
 
-    // গ্রুপ ডাটা বাই ডেট (Date wise grouping)
     const grouped = data.reduce((acc, curr) => {
         const date = curr.created_at.split('T')[0];
         if(!acc[date]) acc[date] = { imp: 0, clicks: 0, rev: 0 };
-        acc[date].imp += 1; // Assuming each row is an impression/click
-        acc[date].clicks += curr.is_click ? 1 : 0;
+        acc[date].imp += 1; 
         acc[date].rev += parseFloat(curr.publisher_share || 0);
         return acc;
     }, {});
@@ -124,35 +122,30 @@ function renderAnalyticsTable(data) {
         const row = grouped[date];
         const cpm = row.imp > 0 ? (row.rev / row.imp) * 1000 : 0;
         html += `
-            <tr style="border-bottom: 1px solid var(--border);">
-                <td style="padding: 12px 5px;">${date}</td>
-                <td style="padding: 12px 5px;">${row.imp}</td>
-                <td style="padding: 12px 5px;">${row.clicks}</td>
-                <td style="padding: 12px 5px;">$${cpm.toFixed(3)}</td>
-                <td style="padding: 12px 5px; color: var(--success); font-weight:700;">$${row.rev.toFixed(4)}</td>
+            <tr>
+                <td>${date}</td>
+                <td>${row.imp}</td>
+                <td>${row.imp}</td> <td>$${cpm.toFixed(3)}</td>
+                <td style="color: var(--success); font-weight:700;">$${row.rev.toFixed(4)}</td>
             </tr>
         `;
     });
     tableBody.innerHTML = html || '<tr><td colspan="5" style="text-align:center; padding:20px;">No Data Found</td></tr>';
 }
 
-// ৮. ক্লিপবোর্ড কপি (Haptic Feedback সহ)
+// ৮. ক্লিপবোর্ড কপি
 function copyToClipboard(id) {
     const copyText = document.getElementById(id);
     if(!copyText) return;
-
     copyText.select();
     navigator.clipboard.writeText(copyText.value);
-    
     window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
-    window.Telegram.WebApp.showAlert("Copied to Clipboard! ✅");
+    window.Telegram.WebApp.showAlert("Link Copied! 📋");
 }
 
-// ৯. হেল্পার ফাংশনসমূহ
 function updateText(id, val) {
     const el = document.getElementById(id);
     if(el) el.innerText = val;
 }
 
-// ১০. অটো রিফ্রেশ (প্রতি ৩০ সেকেন্ডে)
 setInterval(loadStats, 30000);
