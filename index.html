@@ -137,24 +137,29 @@
         </div>
 
         <div id="direct-link-section" class="content-section">
-    <div class="action-card">
-        <h3><i class="fa-solid fa-link"></i> Create Direct Link</h3>
+    <div class="action-card" style="text-align: center;">
+        <h3 style="margin-bottom: 20px;"><i class="fa-solid fa-wand-magic-sparkles"></i> Magic Link Generator</h3>
+        <p style="color: var(--text-dim); margin-bottom: 20px;">No URL needed! Just click the button below to get your unique smart link instantly.</p>
         
-        <p style="font-size: 12px; color: var(--text-dim); margin-top: 10px;">Destination URL:</p>
-        <input type="text" id="target-url" class="input-field" placeholder="https://monetag.com/your-ad-link">
-        
-        <p style="font-size: 12px; color: var(--text-dim); margin-top: 10px;">Link Name (Optional):</p>
-        <input type="text" id="link-alias" class="input-field" placeholder="Example: movie_link">
-        
-        <button class="primary-btn" onclick="handleLinkCreation()">Generate Smart Link</button>
+        <button class="primary-btn" id="gen-btn" onclick="generateAutoLink()" style="font-size: 16px; padding: 15px;">
+            <i class="fa-solid fa-plus-circle"></i> Generate New Smart Link
+        </button>
     </div>
 
-    <div id="result-area" class="action-card" style="display: none; border: 1px dashed var(--primary);">
-        <h4 style="color: var(--primary);">Your Smart Link:</h4>
-        <div style="display: flex; gap: 10px; margin-top: 10px;">
-            <input type="text" id="final-link" class="input-field" readonly style="margin: 0; background: #f8faff;">
-            <button class="primary-btn" style="margin: 0; width: 80px;" onclick="copyLink()">Copy</button>
-        </div>
+    <div class="action-card" style="margin-top: 20px; overflow-x: auto;">
+        <h4 style="margin-bottom: 15px;">Your Active Links</h4>
+        <table style="width: 100%; border-collapse: collapse; min-width: 400px;">
+            <thead>
+                <tr style="text-align: left; background: #f8faff;">
+                    <th style="padding: 12px;">Name (Edit)</th>
+                    <th style="padding: 12px;">Smart Link</th>
+                    <th style="padding: 12px;">Action</th>
+                </tr>
+            </thead>
+            <tbody id="links-list-body">
+                <tr><td colspan="3" style="text-align:center; padding:20px;">Generating your first link...</td></tr>
+            </tbody>
+        </table>
     </div>
         </div>
 
