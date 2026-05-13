@@ -1,13 +1,18 @@
 /**
  * Adzentra Ads - Professional Analytics Engine
- * Handles: Daily Stats, GEO Stats, Device/Browser Tracking & Quality Score
+ * Updated for: Daily Performance Table, GEO tracking & Multi-Device Sync
  */
 
+// ১. মেইন অ্যানালিটিক্স লোডার
 async function loadFullAnalytics() {
     if (!currentUser) return;
 
+    // লোডিং অবস্থা দেখানো (ঐচ্ছিক)
+    const tableBody = document.getElementById('analytics-table-body');
+    if (tableBody) tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px;">Loading Data...</td></tr>';
+
     try {
-        // ১. সকল ক্লিক ডাটা আনা (স্মার্ট অ্যানালিটিক্স এর জন্য)
+        // সুপাবাস থেকে সকল ডাটা আনা
         const { data: analyticsData, error } = await supabase
             .from('clicks')
             .select('*')
@@ -16,107 +21,118 @@ async function loadFullAnalytics() {
 
         if (error) throw error;
 
-        // ২. ডাটা প্রসেসিং (ডিভাইস, ব্রাউজার এবং দেশ অনুযায়ী)
+        // ডাটা প্রসেস করা
         const stats = processAnalytics(analyticsData);
 
-        // ৩. UI আপডেট করা
-        renderGeoTable(stats.geo);
-        renderDeviceStats(stats.devices);
-        renderBrowserStats(stats.browsers);
-        renderDailyCharts(stats.daily);
-        updateTrafficQualityUI(stats.qualityScore);
+        // UI আপডেট করা (নতুন HTML আইডি অনুযায়ী)
+        renderDailyTable(stats.daily);
+        updateTopStats(stats.totals);
+        
+        // যদি এক্সট্রা সেকশন থাকে (GEO/Device)
+        if(document.getElementById('geo-table-body')) renderGeoTable(stats.geo);
 
     } catch (err) {
         console.error("Analytics Load Error:", err.message);
+        if (tableBody) tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color: var(--danger);">Failed to load statistics.</td></tr>';
     }
 }
 
-// ডাটা প্রসেসিং ফাংশন (যাতে বার বার ডাটাবেজে হিট না করতে হয়)
+// ২. ডাটা প্রসেসিং ফাংশন
 function processAnalytics(data) {
-    const geo = {};
-    const devices = {};
-    const browsers = {};
     const daily = {};
-    let totalScore = 0;
+    const geo = {};
+    const totals = { impressions: data.length, clicks: 0, revenue: 0 };
 
     data.forEach(item => {
+        // তারিখ বের করা
+        const date = item.created_at.split('T')[0];
+        const rev = parseFloat(item.publisher_share || 0);
+        const isClick = item.is_click || false;
+
+        // Daily Performance ক্যালকুলেশন
+        if (!daily[date]) daily[date] = { imp: 0, clicks: 0, revenue: 0 };
+        daily[date].imp++;
+        if (isClick) daily[date].clicks++;
+        daily[date].revenue += rev;
+
         // GEO Stats
         const country = item.country_code || 'Unknown';
-        if (!geo[country]) geo[country] = { clicks: 0, earnings: 0 };
-        geo[country].clicks++;
-        geo[country].earnings += parseFloat(item.publisher_share || 0);
+        if (!geo[country]) geo[country] = { clicks: 0, revenue: 0 };
+        if (isClick) geo[country].clicks++;
+        geo[country].revenue += rev;
 
-        // Device Stats (পাবলিশার জানতে পারবে তার ট্রাফিক মোবাইল না ডেস্কটপ)
-        const device = item.device_type || 'Mobile';
-        devices[device] = (devices[device] || 0) + 1;
-
-        // Browser Stats
-        const browser = item.browser_name || 'In-App';
-        browsers[browser] = (browsers[browser] || 0) + 1;
-
-        // Daily Trend (গত ৭ দিনের গ্রাফের জন্য)
-        const date = new Date(item.created_at).toLocaleDateString();
-        if (!daily[date]) daily[date] = { clicks: 0, earnings: 0 };
-        daily[date].clicks++;
-        daily[date].earnings += parseFloat(item.publisher_share || 0);
+        // Totals update
+        if (isClick) totals.clicks++;
+        totals.revenue += rev;
     });
 
-    return { geo, devices, browsers, daily };
+    return { daily, geo, totals };
 }
 
-// দেশভিত্তিক টেবিল রেন্ডার
-function renderGeoTable(geoData) {
-    const tableBody = document.getElementById('geo-table-body');
+// ৩. Daily Performance টেবিল রেন্ডার (আপনার নতুন HTML কোড অনুযায়ী)
+function renderDailyTable(dailyData) {
+    const tableBody = document.getElementById('analytics-table-body');
     if (!tableBody) return;
+
+    let html = '';
+    // তারিখ অনুযায়ী ডিসেন্ডিং অর্ডারে সাজানো (নতুনগুলো আগে)
+    const sortedDates = Object.keys(dailyData).sort().reverse();
+
+    sortedDates.forEach(date => {
+        const row = dailyData[date];
+        // CPM ক্যালকুলেশন: (Revenue / Impressions) * 1000
+        const cpm = row.imp > 0 ? (row.revenue / row.imp * 1000).toFixed(3) : "0.000";
+        
+        html += `
+            <tr style="border-bottom: 1px solid var(--border);">
+                <td style="padding: 12px 5px;">${date}</td>
+                <td style="padding: 12px 5px;">${row.imp}</td>
+                <td style="padding: 12px 5px;">${row.clicks}</td>
+                <td style="padding: 12px 5px;">$${cpm}</td>
+                <td style="padding: 12px 5px; color: var(--success); font-weight:700;">$${row.revenue.toFixed(4)}</td>
+            </tr>
+        `;
+    });
+
+    tableBody.innerHTML = html || '<tr><td colspan="5" style="text-align:center; padding:20px;">No data found for the selected period.</td></tr>';
+}
+
+// ৪. অ্যানালিটিক্স সেকশনের উপরের কার্ডগুলো আপডেট করা
+function updateTopStats(totals) {
+    // ড্যাশবোর্ড এবং অ্যানালিটিক্স সেকশনের টপ কার্ড সিঙ্ক
+    document.querySelectorAll('#total-imp-val, .analytics-imp-card').forEach(el => el.innerText = totals.impressions);
+    document.querySelectorAll('#total-click-val, .analytics-click-card').forEach(el => el.innerText = totals.clicks);
+}
+
+// ৫. জিও টেবিল রেন্ডার (যদি থাকে)
+function renderGeoTable(geoData) {
+    const geoBody = document.getElementById('geo-table-body');
+    if (!geoBody) return;
 
     let html = '';
     Object.keys(geoData).forEach(country => {
         const item = geoData[country];
-        const cpm = item.clicks > 0 ? (item.earnings / item.clicks * 1000).toFixed(2) : "0.00";
         html += `
-            <tr>
-                <td><span class="flag-icon">📍</span> ${country}</td>
-                <td>${item.clicks}</td>
-                <td>$${cpm}</td>
-                <td class="text-success">$${item.earnings.toFixed(4)}</td>
+            <tr style="border-bottom: 1px solid var(--border);">
+                <td style="padding: 12px 5px;">📍 ${country}</td>
+                <td style="padding: 12px 5px;">${item.clicks}</td>
+                <td style="padding: 12px 5px; color: var(--success);">$${item.revenue.toFixed(4)}</td>
             </tr>
         `;
     });
-    tableBody.innerHTML = html || '<tr><td colspan="4">No GEO data available</td></tr>';
+    geoBody.innerHTML = html;
 }
 
-// ডিভাইস এবং ব্রাউজার স্ট্যাটাস শো করা (বক্স আকারে)
-function renderDeviceStats(deviceData) {
-    const container = document.getElementById('device-stats-container');
-    if (!container) return;
-
-    let html = '';
-    for (const [device, count] of Object.entries(deviceData)) {
-        html += `
-            <div class="stat-mini-card">
-                <span>${device}</span>
-                <strong>${count} clicks</strong>
-            </div>
-        `;
-    }
-    container.innerHTML = html;
+// ৬. সেকশন সুইচ হলে অটো লোড করার লজিক
+// এটি আপনার showSection() ফাংশন থেকে কল হওয়া উচিত
+function onAnalyticsSectionOpen() {
+    loadFullAnalytics();
 }
 
-// ট্রাফিক কোয়ালিটি আপডেট (আপনার ৭ নম্বর রুল অনুযায়ী)
-function updateTrafficQualityUI(score) {
-    const qualityEl = document.getElementById('traffic-quality-label');
-    if (!qualityEl) return;
-
-    // সিম্পল লজিক: ফ্রড ক্লিক কম হলে Excellent
-    // (ভবিষ্যতে এখানে AI ভিত্তিক স্কোরিং যোগ করা যাবে)
-    qualityEl.innerText = "Excellent"; 
-    qualityEl.className = "badge badge-success";
-}
-
-// পেজ লোড হলে কল করা
+// ইনিশিয়াল কল
 document.addEventListener('DOMContentLoaded', () => {
-    // SPA মোডে থাকলে সেকশন সুইচ করার সময় এটি কল হবে
-    if (window.location.hash === '#analytics' || document.getElementById('analytics-section')) {
+    // যদি সরাসরি ইউজার এনালাইটিক্স পেজে থাকে
+    if (document.getElementById('analytics-section')?.classList.contains('active-section')) {
         loadFullAnalytics();
     }
 });
