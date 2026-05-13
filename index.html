@@ -137,11 +137,25 @@
         </div>
 
         <div id="direct-link-section" class="content-section">
-            <div class="action-card">
-                <h3><i class="fa-solid fa-link"></i> Create Direct Link</h3>
-                <input type="text" id="target-url" class="input-field" placeholder="Enter Destination URL">
-                <button class="primary-btn" onclick="handleLinkCreation()">Generate Link</button>
-            </div>
+    <div class="action-card">
+        <h3><i class="fa-solid fa-link"></i> Create Direct Link</h3>
+        
+        <p style="font-size: 12px; color: var(--text-dim); margin-top: 10px;">Destination URL:</p>
+        <input type="text" id="target-url" class="input-field" placeholder="https://monetag.com/your-ad-link">
+        
+        <p style="font-size: 12px; color: var(--text-dim); margin-top: 10px;">Link Name (Optional):</p>
+        <input type="text" id="link-alias" class="input-field" placeholder="Example: movie_link">
+        
+        <button class="primary-btn" onclick="handleLinkCreation()">Generate Smart Link</button>
+    </div>
+
+    <div id="result-area" class="action-card" style="display: none; border: 1px dashed var(--primary);">
+        <h4 style="color: var(--primary);">Your Smart Link:</h4>
+        <div style="display: flex; gap: 10px; margin-top: 10px;">
+            <input type="text" id="final-link" class="input-field" readonly style="margin: 0; background: #f8faff;">
+            <button class="primary-btn" style="margin: 0; width: 80px;" onclick="copyLink()">Copy</button>
+        </div>
+    </div>
         </div>
 
         <div id="websites-section" class="content-section">
