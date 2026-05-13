@@ -11,7 +11,76 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     
-    <link rel="stylesheet" href="style.css">
+    <style>
+        :root {
+            --bg-color: #f4f7fe;
+            --sidebar-bg: #ffffff;
+            --primary: #4318ff;
+            --text-main: #1b2559;
+            --text-dim: #a3adc2;
+            --card-shadow: 0px 18px 40px rgba(112, 144, 176, 0.12);
+            --border: #e0e5f2;
+            --success: #05cd99;
+            --danger: #ee5d50;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-main); overflow-x: hidden; }
+
+        /* Header */
+        header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 15px 20px; background: #fff; position: sticky; top: 0; z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+        }
+        .header-left { display: flex; align-items: center; gap: 15px; }
+        .menu-btn { font-size: 20px; cursor: pointer; color: var(--text-main); }
+        .logo { font-size: 22px; font-weight: 700; color: var(--primary); }
+        .logo span { color: #1b2559; }
+        .user-profile-img { width: 35px; height: 35px; border-radius: 50%; cursor: pointer; object-fit: cover; border: 2px solid var(--primary); }
+
+        /* Sidebar */
+        #sidebar {
+            position: fixed; left: -280px; top: 0; width: 280px; height: 100%;
+            background: var(--sidebar-bg); box-shadow: 10px 0 30px rgba(0,0,0,0.05);
+            transition: 0.3s; z-index: 1000; padding-top: 20px;
+        }
+        #sidebar.active { left: 0; }
+        .sidebar-header { padding: 0 25px 20px; font-weight: 800; font-size: 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; }
+        .sidebar-item {
+            padding: 15px 25px; display: flex; align-items: center; gap: 12px;
+            color: var(--text-dim); text-decoration: none; font-weight: 500; cursor: pointer;
+        }
+        .sidebar-item i { width: 20px; }
+        .sidebar-item:hover, .sidebar-item.active { color: var(--primary); background: #f4f7fe; border-right: 4px solid var(--primary); }
+        .coming-soon { font-size: 10px; background: #eee; padding: 2px 6px; border-radius: 4px; margin-left: auto; color: #888; }
+
+        /* Main Content */
+        .container { padding: 20px; max-width: 1200px; margin: auto; }
+        .content-section { display: none; animation: fadeIn 0.3s ease; }
+        .active-section { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Stats Cards */
+        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 20px; }
+        .stat-card { background: #fff; padding: 20px; border-radius: 20px; box-shadow: var(--card-shadow); }
+        .stat-card h5 { color: var(--text-dim); font-size: 11px; text-transform: uppercase; margin-bottom: 5px; }
+        .stat-card .value { font-size: 18px; font-weight: 700; }
+        .text-green { color: var(--success); }
+
+        /* Action Cards */
+        .action-card { background: #fff; padding: 20px; border-radius: 20px; margin-top: 20px; box-shadow: var(--card-shadow); }
+        .input-field { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--border); margin-top: 10px; outline: none; }
+        .primary-btn { background: var(--primary); color: #fff; padding: 12px; border: none; border-radius: 12px; width: 100%; font-weight: 600; cursor: pointer; margin-top: 15px; }
+        .badge { padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; }
+        .badge-success { background: #e6fff5; color: var(--success); }
+
+        /* Overlay */
+        #overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); z-index: 999; }
+        
+        table th { padding: 10px 5px; color: var(--text-dim); border-bottom: 1px solid var(--border); text-transform: uppercase; font-size: 11px; }
+        table td { padding: 12px 5px; border-bottom: 1px solid var(--border); font-size: 13px; }
+    </style>
 </head>
 <body>
 
@@ -19,38 +88,17 @@
 
     <div id="sidebar">
         <div class="sidebar-header">
-            Adzentra <span style="color: var(--primary);">Ads</span>
+            <div>Adzentra <span style="color: var(--primary);">Ads</span></div>
             <i class="fa-solid fa-xmark" style="cursor: pointer;" onclick="toggleSidebar()"></i>
         </div>
-        
-        <div class="sidebar-item active" onclick="showSection('dashboard')">
-            <i class="fa-solid fa-house"></i> Dashboard
-        </div>
-        <div class="sidebar-item" onclick="showSection('direct-link')">
-            <i class="fa-solid fa-link"></i> Direct Links
-        </div>
-        <div class="sidebar-item" onclick="showSection('websites')">
-            <i class="fa-solid fa-globe"></i> My Websites
-        </div>
-        <div class="sidebar-item">
-            <i class="fa-solid fa-bullhorn"></i> Telegram Channels <span class="coming-soon">Soon</span>
-        </div>
-        <div class="sidebar-item">
-            <i class="fa-solid fa-mobile-screen"></i> My Apps <span class="coming-soon">Soon</span>
-        </div>
-        <div class="sidebar-item" onclick="showSection('analytics')">
-            <i class="fa-solid fa-chart-line"></i> Statistics
-        </div>
-        <div class="sidebar-item" onclick="showSection('withdraw')">
-            <i class="fa-solid fa-wallet"></i> Withdraw
-        </div>
-        <div class="sidebar-item" onclick="showSection('profile')">
-            <i class="fa-solid fa-user"></i> My Profile
-        </div>
-        
-        <div class="sidebar-item" style="margin-top: 50px; color: var(--danger);">
-            <i class="fa-solid fa-right-from-bracket"></i> Logout
-        </div>
+        <div class="sidebar-item active" onclick="showSection('dashboard')"><i class="fa-solid fa-house"></i> Dashboard</div>
+        <div class="sidebar-item" onclick="showSection('direct-link')"><i class="fa-solid fa-link"></i> Direct Links</div>
+        <div class="sidebar-item" onclick="showSection('websites')"><i class="fa-solid fa-globe"></i> My Websites</div>
+        <div class="sidebar-item"><i class="fa-solid fa-bullhorn"></i> Telegram <span class="coming-soon">Soon</span></div>
+        <div class="sidebar-item" onclick="showSection('analytics')"><i class="fa-solid fa-chart-line"></i> Statistics</div>
+        <div class="sidebar-item" onclick="showSection('withdraw')"><i class="fa-solid fa-wallet"></i> Withdraw</div>
+        <div class="sidebar-item" onclick="showSection('profile')"><i class="fa-solid fa-user"></i> My Profile</div>
+        <div class="sidebar-item" style="margin-top: 30px; color: var(--danger);"><i class="fa-solid fa-right-from-bracket"></i> Logout</div>
     </div>
 
     <header>
@@ -61,28 +109,27 @@
         <img id="user-avatar" src="https://via.placeholder.com/100" class="user-profile-img" onclick="showSection('profile')" alt="Profile">
     </header>
 
-    <div class="container" id="main-content">
+    <div class="container">
         
         <div id="dashboard-section" class="content-section active-section">
             <div class="stats-grid">
                 <div class="stat-card">
                     <h5>Current Balance</h5>
-                    <div class="value" id="balance-val">$0.00</div>
+                    <div class="value" id="balance-val">$0.0000</div>
                 </div>
                 <div class="stat-card">
                     <h5>Total Earnings</h5>
                     <div class="value text-green" id="lifetime-val">$0.00</div>
                 </div>
                 <div class="stat-card">
-                    <h5>Total Impressions</h5>
-                    <div class="value">0</div>
+                    <h5>Impressions</h5>
+                    <div class="value" id="dash-imp">0</div>
                 </div>
                 <div class="stat-card">
                     <h5>Clicks</h5>
-                    <div class="value">0</div>
+                    <div class="value" id="dash-clicks">0</div>
                 </div>
             </div>
-            
             <div class="action-card">
                 <h4>Quick Actions</h4>
                 <button class="primary-btn" onclick="showSection('direct-link')">Create Smart Link</button>
@@ -93,7 +140,7 @@
             <div class="action-card">
                 <h3><i class="fa-solid fa-link"></i> Create Direct Link</h3>
                 <input type="text" id="target-url" class="input-field" placeholder="Enter Destination URL">
-                <button class="primary-btn">Generate Direct Link</button>
+                <button class="primary-btn" onclick="handleLinkCreation()">Generate Link</button>
             </div>
         </div>
 
@@ -107,35 +154,17 @@
 
         <div id="analytics-section" class="content-section">
             <div class="stats-grid">
-                <div class="stat-card">
-                    <h5>Total Impressions</h5>
-                    <div class="value">0</div>
-                </div>
-                <div class="stat-card">
-                    <h5>Total Clicks</h5>
-                    <div class="value">0</div>
-                </div>
+                <div class="stat-card"><h5>Total Impressions</h5><div class="value" id="total-imp-val">0</div></div>
+                <div class="stat-card"><h5>Total Clicks</h5><div class="value" id="total-click-val">0</div></div>
             </div>
-
-            <div class="action-card" style="padding: 15px; overflow-x: auto;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                    <h4 style="margin:0;">Daily Performance</h4>
-                    <button class="badge badge-success" style="border:none;">View All</button>
-                </div>
-                <table style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: left;">
+            <div class="action-card" style="overflow-x: auto;">
+                <h4 style="margin-bottom:15px;">Daily Performance</h4>
+                <table style="width: 100%; border-collapse: collapse;">
                     <thead>
-                        <tr style="color: var(--text-dim); border-bottom: 1px solid var(--border);">
-                            <th style="padding: 10px 5px;">DATE</th>
-                            <th style="padding: 10px 5px;">IMPRESSIONS</th>
-                            <th style="padding: 10px 5px;">CLICKS</th>
-                            <th style="padding: 10px 5px;">CPM</th>
-                            <th style="padding: 10px 5px;">REVENUE</th>
-                        </tr>
+                        <tr><th>Date</th><th>Imp</th><th>Clicks</th><th>CPM</th><th>Revenue</th></tr>
                     </thead>
                     <tbody id="analytics-table-body">
-                        <tr>
-                            <td colspan="5" style="text-align:center; padding: 20px; color: var(--text-dim);">No data available yet</td>
-                        </tr>
+                        <tr><td colspan="5" style="text-align:center; padding: 20px; color: var(--text-dim);">No data found</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -145,32 +174,119 @@
             <div class="action-card">
                 <h3><i class="fa-solid fa-wallet"></i> Withdraw</h3>
                 <input type="number" class="input-field" placeholder="Enter Amount ($)">
-                <select class="input-field">
-                    <option value="usdt">USDT (TRC20)</option>
-                    <option value="payeer">Payeer</option>
-                    <option value="binance">Binance Pay</option>
-                </select>
+                <select class="input-field"><option>USDT (TRC20)</option><option>Payeer</option></select>
                 <button class="primary-btn">Request Payout</button>
             </div>
         </div>
 
         <div id="profile-section" class="content-section">
             <div class="action-card" style="text-align: center;">
-                <img id="profile-pic-large" src="https://via.placeholder.com/100" style="width: 100px; border-radius: 50%; border: 3px solid var(--primary); margin-bottom: 15px;">
+                <img id="profile-pic-large" src="https://via.placeholder.com/100" style="width: 80px; border-radius: 50%; border: 3px solid var(--primary); margin-bottom: 10px;">
                 <h2 id="p-name">Loading...</h2>
-                <p id="p-username" style="color: var(--text-dim);">@username</p>
-                
-                <div class="profile-info-list">
-                    <p><strong>User ID:</strong> <span id="p-id">0000000000</span></p>
-                    <p><strong>Current Balance:</strong> <span id="p-balance">$0.00</span></p>
-                    <p><strong>Total Withdrawn:</strong> <span>$0.00</span></p>
-                    <p><strong>Traffic Quality:</strong> <span class="badge badge-success">Excellent</span></p>
+                <p id="p-username" style="color: var(--text-dim); margin-bottom: 20px;">@username</p>
+                <div style="text-align: left; background: #f8faff; padding: 15px; border-radius: 15px;">
+                    <p style="margin-bottom:8px;"><strong>User ID:</strong> <span id="p-id">0</span></p>
+                    <p style="margin-bottom:8px;"><strong>Balance:</strong> <span id="p-balance">$0.00</span></p>
+                    <p><strong>Quality:</strong> <span class="badge badge-success">Excellent</span></p>
                 </div>
             </div>
         </div>
 
     </div>
 
-    <script src="app.js"></script>
+    <script>
+        // ১. সেকশন নেভিগেশন লজিক
+        function showSection(sectionId) {
+            // সব সেকশন হাইড করা
+            const sections = document.querySelectorAll('.content-section');
+            sections.forEach(sec => sec.classList.remove('active-section'));
+
+            // টার্গেট সেকশন দেখানো
+            const target = document.getElementById(sectionId + '-section');
+            if (target) {
+                target.classList.add('active-section');
+            }
+
+            // সাইডবার আইটেম একটিভ করা
+            document.querySelectorAll('.sidebar-item').forEach(item => {
+                item.classList.remove('active');
+                if(item.innerText.toLowerCase().includes(sectionId)) item.classList.add('active');
+            });
+
+            // সাইডবার বন্ধ করা (মোবাইলে)
+            const sidebar = document.getElementById('sidebar');
+            if(sidebar.classList.contains('active')) toggleSidebar();
+            
+            // যদি এনালাইটিক্স হয় তবে ডাটা লোড করা
+            if(sectionId === 'analytics') loadAnalytics();
+        }
+
+        // ২. সাইডবার টগল
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            sidebar.classList.toggle('active');
+            overlay.style.display = sidebar.classList.contains('active') ? 'block' : 'none';
+        }
+
+        // ৩. টেলিগ্রাম ডাটা লোড
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const user = tg.initDataUnsafe?.user;
+            if (user) {
+                const name = user.first_name + (user.last_name ? " " + user.last_name : "");
+                document.getElementById('p-name').innerText = name;
+                document.getElementById('p-username').innerText = "@" + (user.username || "user");
+                document.getElementById('p-id').innerText = user.id;
+                if(user.photo_url) {
+                    document.getElementById('user-avatar').src = user.photo_url;
+                    document.getElementById('profile-pic-large').src = user.photo_url;
+                }
+            }
+            // ইনিশিয়াল ডাটা রিফ্রেশ
+            updateUIFromData();
+        });
+
+        // ৪. ইউজার ডাটা আপডেট (নমুনা ডাটা দিয়ে)
+        let currentUser = { balance: 21.4321, total_earned: 21.43, imp: 483, clicks: 8 };
+
+        function updateUIFromData() {
+            document.getElementById('balance-val').innerText = "$" + currentUser.balance.toFixed(4);
+            document.getElementById('p-balance').innerText = "$" + currentUser.balance.toFixed(4);
+            document.getElementById('lifetime-val').innerText = "$" + currentUser.total_earned.toFixed(2);
+            document.getElementById('dash-imp').innerText = currentUser.imp;
+            document.getElementById('dash-clicks').innerText = currentUser.clicks;
+        }
+
+        // ৫. স্মার্ট লিংক জেনারেটর ফাংশন
+        function handleLinkCreation() {
+            const url = document.getElementById('target-url').value;
+            if(!url) return tg.showAlert("URL দিন!");
+            tg.showConfirm("আপনি কি নিশ্চিত?", (confirmed) => {
+                if(confirmed) tg.showAlert("লিংক তৈরি হয়েছে: https://adzentra.click/" + Math.random().toString(36).substring(7));
+            });
+        }
+
+        // ৬. এনালাইটিক্স ডাটা রেন্ডার
+        function loadAnalytics() {
+            const tableBody = document.getElementById('analytics-table-body');
+            document.getElementById('total-imp-val').innerText = currentUser.imp;
+            document.getElementById('total-click-val').innerText = currentUser.clicks;
+
+            // নমুনা ডাটা রেন্ডারিং
+            tableBody.innerHTML = `
+                <tr>
+                    <td>2026-05-12</td>
+                    <td>483</td>
+                    <td>8</td>
+                    <td>$0.028</td>
+                    <td class="text-green">$0.013</td>
+                </tr>
+            `;
+        }
+    </script>
 </body>
 </html>
