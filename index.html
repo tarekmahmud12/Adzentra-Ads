@@ -3,287 +3,224 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Adzentra Ads - Publisher Dashboard</title>
+    <title>Adzentra Ads - Professional Publisher Dashboard</title>
     
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css">
     
     <style>
         :root {
-            --primary: #00d4ff;
+            --bg-color: #f4f7fe;
+            --sidebar-bg: #ffffff;
+            --primary: #4318ff;
+            --text-main: #1b2559;
+            --text-secondary: #a3adc2;
+            --card-shadow: 0px 18px 40px rgba(112, 144, 176, 0.12);
         }
-        .badge { padding: 4px 8px; border-radius: 20px; font-size: 12px; font-weight: 600; }
-        .badge-success { background: #28a745; color: white; }
-        .score-box { background: #1e272e; padding: 12px; border-radius: 12px; border-left: 5px solid #f1c40f; }
-        .stat-card { background: #16213e; border-radius: 12px; padding: 14px; text-align: center; }
-        .nav-item.active { color: var(--primary); border-top: 3px solid var(--primary); }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-main); }
+
+        /* Top Header */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: #fff;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header-left { display: flex; align-items: center; gap: 15px; }
+        .menu-btn { font-size: 20px; cursor: pointer; color: var(--text-main); }
+        .logo { font-size: 22px; font-weight: 700; color: var(--primary); }
+        .logo span { color: #1b2559; }
+        .user-profile-img { width: 40px; height: 40px; border-radius: 50%; cursor: pointer; object-fit: cover; }
+
+        /* Sidebar Menu */
+        #sidebar {
+            position: fixed;
+            left: -280px;
+            top: 0;
+            width: 280px;
+            height: 100%;
+            background: var(--sidebar-bg);
+            box-shadow: 10px 0 30px rgba(0,0,0,0.05);
+            transition: 0.3s;
+            z-index: 1000;
+            padding-top: 20px;
+        }
+        #sidebar.active { left: 0; }
+        .sidebar-item {
+            padding: 15px 25px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        .sidebar-item i { width: 20px; }
+        .sidebar-item:hover, .sidebar-item.active { color: var(--primary); background: #f4f7fe; border-right: 4px solid var(--primary); }
+        .coming-soon { font-size: 10px; background: #eee; padding: 2px 6px; border-radius: 4px; margin-left: auto; }
+
+        /* Dashboard Content */
+        .container { padding: 20px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 20px; }
+        .stat-card {
+            background: #fff;
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: var(--card-shadow);
+            text-align: left;
+        }
+        .stat-card h5 { color: var(--text-secondary); font-size: 12px; margin-bottom: 5px; }
+        .stat-card .value { font-size: 20px; font-weight: 700; }
+        .text-green { color: #05cd99; }
+
+        /* Section Styling */
+        .content-section { display: none; }
+        .active-section { display: block; }
+
+        /* Buttons and Inputs */
+        .action-card { background: #fff; padding: 20px; border-radius: 20px; margin-top: 20px; box-shadow: var(--card-shadow); }
+        .input-field { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #e0e5f2; margin-top: 10px; }
+        .primary-btn { background: var(--primary); color: #fff; padding: 12px; border: none; border-radius: 12px; width: 100%; font-weight: 600; cursor: pointer; margin-top: 10px; }
+
+        /* Overlay */
+        #overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); z-index: 999; }
     </style>
 </head>
 <body>
 
-    <div class="app-container">
-        <header>
-            <div class="header-main">
-                <h1 class="logo">Adzentra<span>Ads</span></h1>
-                <div style="display: flex; align-items: center; gap: 12px;">
-                    <span id="top-balance" class="balance-badge">$0.00</span>
-                </div>
-            </div>
-        </header>
+    <div id="overlay" onclick="toggleSidebar()"></div>
 
-        <main id="main-content">
-            
-            <!-- Loading Screen -->
-            <div id="loading-screen" class="status-box">
-                <div class="spinner"></div>
-                <p>Establishing Secure Connection...</p>
-                <small>Fraud Protection System v1.0 • Checking Traffic</small>
-            </div>
-
-            <!-- ==================== DASHBOARD ==================== -->
-            <div id="dashboard-section" class="content-section">
-                <div class="main-balance-card">
-                    <div class="card-header">
-                        <h4>Total Available Balance</h4>
-                        <i class="fa-solid fa-shield-halved text-success"></i>
-                    </div>
-                    <div class="balance-amount" id="balance-val">$0.0000</div>
-                    <div class="balance-stats">
-                        <span>Pending: <small id="pending-val">$0.00</small></span>
-                        <span>Lifetime: <small id="lifetime-val">$0.00</small></span>
-                    </div>
-                </div>
-
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <h5>Today Clicks</h5>
-                        <span class="value blue" id="today-clicks">0</span>
-                    </div>
-                    <div class="stat-card">
-                        <h5>Today Earnings</h5>
-                        <span class="value green" id="today-earning">$0.00</span>
-                    </div>
-                    <div class="stat-card">
-                        <h5>Avg. CPM</h5>
-                        <span class="value" id="cpm-val">$0.00</span>
-                    </div>
-                    <div class="stat-card">
-                        <h5>Total Impressions</h5>
-                        <span class="value" id="total-impressions">0</span>
-                    </div>
-                    <div class="stat-card">
-                        <h5>CTR</h5>
-                        <span class="value" id="ctr-val">0.00%</span>
-                    </div>
-                    <div class="stat-card">
-                        <h5>Ref. Bonus (5%)</h5>
-                        <span class="value yellow" id="ref-earning">$0.00</span>
-                    </div>
-                </div>
-
-                <!-- Quick Links -->
-                <div class="quick-links">
-                    <a href="javascript:void(0)" onclick="showSection('links')" class="quick-btn">
-                        <i class="fa-solid fa-list"></i><br> My Links
-                    </a>
-                    <a href="javascript:void(0)" onclick="showSection('analytics')" class="quick-btn">
-                        <i class="fa-solid fa-chart-line"></i><br> Analytics
-                    </a>
-                    <a href="javascript:void(0)" onclick="showSection('withdraw')" class="quick-btn">
-                        <i class="fa-solid fa-wallet"></i><br> Withdraw
-                    </a>
-                </div>
-            </div>
-
-            <!-- ==================== MY LINKS SECTION ==================== -->
-            <div id="links-section" class="content-section" style="display: none;">
-                <h3><i class="fa-solid fa-link"></i> My Smart Links</h3>
-                <div id="links-list">
-                    <p style="text-align:center; color:#888; padding:20px;">No links created yet.</p>
-                </div>
-            </div>
-
-            <!-- ==================== ANALYTICS SECTION ==================== -->
-            <div id="analytics-section" class="content-section" style="display: none;">
-                <h3><i class="fa-solid fa-chart-bar"></i> Detailed Analytics</h3>
-                <div class="stats-grid">
-                    <div class="stat-card"><strong>Daily Stats</strong></div>
-                    <div class="stat-card"><strong>Country Stats</strong></div>
-                    <div class="stat-card"><strong>Device Stats</strong></div>
-                    <div class="stat-card"><strong>Browser Stats</strong></div>
-                </div>
-                <p style="text-align:center; margin-top:20px; color:#00d4ff;">Full analytics coming soon with charts...</p>
-            </div>
-
-            <!-- ==================== WITHDRAW SECTION ==================== -->
-            <div id="withdraw-section" class="content-section" style="display: none;">
-                <h3><i class="fa-solid fa-wallet"></i> Withdraw Earnings</h3>
-                
-                <div class="action-box">
-                    <label>Withdrawal Method</label>
-                    <select id="withdraw-method" class="input-field">
-                        <option value="USDT_TRC20">USDT TRC20</option>
-                        <option value="USDT_BEP20">USDT BEP20</option>
-                    </select>
-                    
-                    <div class="form-group">
-                        <label>Wallet Address</label>
-                        <input type="text" id="wallet-address" placeholder="Enter your wallet address">
-                    </div>
-                    
-                    <button class="btn primary-btn" style="width:100%; margin-top:15px;" onclick="requestWithdraw()">
-                        Request Withdrawal
-                    </button>
-                </div>
-
-                <div class="action-box">
-                    <h4>Withdrawal History</h4>
-                    <div id="withdraw-history">
-                        <p style="color:#888; text-align:center;">No withdrawals yet</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ==================== SETTINGS SECTION ==================== -->
-            <div id="settings-section" class="content-section" style="display: none;">
-                <h3><i class="fa-solid fa-gear"></i> Account Settings</h3>
-                
-                <!-- Full Profile Info -->
-                <div class="action-box">
-                    <div class="profile-card" style="text-align: center; padding: 20px 0;">
-                        <div class="avatar-container">
-                            <img id="user-photo" src="assets/default-avatar.png" alt="Profile" style="width: 110px; height: 110px; border-radius: 50%;">
-                        </div>
-                        <h2>, <span id="user-name-settings">Publisher</span></h2>
-                        <p class="user-tg-id">TG ID: <span id="tg-id-val">000000000</span></p>
-                        
-                        <div class="score-box">
-                            <span>Traffic Quality Score: <strong id="traffic-score" style="color:#f1c40f;">Excellent</strong></span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="action-box">
-                    <div class="setting-item">
-                        <span>Telegram Account</span>
-                        <span class="badge badge-success">Connected</span>
-                    </div>
-                    <div class="setting-item">
-                        <span>Fraud Protection</span>
-                        <span class="badge badge-success">Active</span>
-                    </div>
-                    <div class="setting-item">
-                        <span>2FA Security</span>
-                        <button class="btn small-btn">Enable</button>
-                    </div>
-                </div>
-
-                <!-- Referral Link -->
-                <div class="action-box">
-                    <div class="box-title">
-                        <i class="fa-solid fa-users"></i>
-                        <h4>Referral Program</h4>
-                    </div>
-                    <p class="box-desc">Earn 5% lifetime commission from your referrals</p>
-                    <div class="copy-container">
-                        <input type="text" id="ref-link" readonly value="Loading...">
-                        <button class="copy-icon-btn" onclick="copyToClipboard('ref-link')">
-                            <i class="fa-solid fa-copy"></i>
-                        </button>
-                    </div>
-                </div>
-
-
-            </div>
-        </main>
-
-        <!-- Bottom Navigation -->
-        <nav id="bottom-nav" class="bottom-nav">
-            <a href="javascript:void(0)" onclick="showSection('dashboard')" class="nav-item active" id="nav-dashboard">
-                <i class="fa-solid fa-house"></i><span>Home</span>
-            </a>
-            <a href="javascript:void(0)" onclick="showSection('links')" class="nav-item" id="nav-links">
-                <i class="fa-solid fa-link"></i><span>Links</span>
-            </a>
-            <a href="javascript:void(0)" onclick="showSection('analytics')" class="nav-item" id="nav-analytics">
-                <i class="fa-solid fa-chart-line"></i><span>Stats</span>
-            </a>
-            <a href="javascript:void(0)" onclick="showSection('withdraw')" class="nav-item" id="nav-withdraw">
-                <i class="fa-solid fa-wallet"></i><span>Wallet</span>
-            </a>
-            <a href="javascript:void(0)" onclick="showSection('settings')" class="nav-item" id="nav-settings">
-                <i class="fa-solid fa-gear"></i><span>Settings</span>
-            </a>
-        </nav>
+    <div id="sidebar">
+        <div style="padding: 0 25px 20px; font-weight: 800; font-size: 20px; border-bottom: 1px solid #eee;">
+            <i class="fa-solid fa-xmark" style="float: right; cursor: pointer;" onclick="toggleSidebar()"></i>
+            Adzentra <span style="color: var(--primary);">Ads</span>
+        </div>
+        <div class="sidebar-item active" onclick="showSection('dashboard')"><i class="fa-solid fa-house"></i> Dashboard</div>
+        <div class="sidebar-item" onclick="showSection('direct-link')"><i class="fa-solid fa-link"></i> Direct Links</div>
+        <div class="sidebar-item" onclick="showSection('websites')"><i class="fa-solid fa-globe"></i> My Websites</div>
+        <div class="sidebar-item"><i class="fa-solid fa-bullhorn"></i> Telegram Channels <span class="coming-soon">Soon</span></div>
+        <div class="sidebar-item"><i class="fa-solid fa-mobile-screen"></i> My Apps <span class="coming-soon">Soon</span></div>
+        <div class="sidebar-item" onclick="showSection('analytics')"><i class="fa-solid fa-chart-line"></i> Statistics</div>
+        <div class="sidebar-item" onclick="showSection('withdraw')"><i class="fa-solid fa-wallet"></i> Withdraw</div>
+        <div class="sidebar-item" onclick="showSection('profile')"><i class="fa-solid fa-user"></i> My Profile</div>
+        <div class="sidebar-item" style="margin-top: 50px; color: #ff4d4d;"><i class="fa-solid fa-right-from-bracket"></i> Logout</div>
     </div>
 
-    <script src="js/api.js"></script>
-    <script src="js/app.js"></script>
-    <script src="main.js"></script>
+    <header>
+        <div class="header-left">
+            <i class="fa-solid fa-bars menu-btn" onclick="toggleSidebar()"></i>
+            <div class="logo">Adzentra<span>Ads</span></div>
+        </div>
+        <img id="user-avatar" src="https://via.placeholder.com/100" class="user-profile-img" onclick="showSection('profile')" alt="Profile">
+    </header>
+
+    <div class="container">
+        
+        <div id="dashboard-section" class="content-section active-section">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h5>Current Balance</h5>
+                    <div class="value" id="balance-val">$21.43</div>
+                </div>
+                <div class="stat-card">
+                    <h5>Total Earnings</h5>
+                    <div class="value text-green" id="lifetime-val">$21.43</div>
+                </div>
+                <div class="stat-card">
+                    <h5>Total Impressions</h5>
+                    <div class="value">483</div>
+                </div>
+                <div class="stat-card">
+                    <h5>Clicks</h5>
+                    <div class="value">8</div>
+                </div>
+            </div>
+            
+            <div class="action-card">
+                <h4>Quick Actions</h4>
+                <button class="primary-btn" onclick="showSection('direct-link')">Create Smart Link</button>
+            </div>
+        </div>
+
+        <div id="direct-link-section" class="content-section">
+            <div class="action-card">
+                <h3><i class="fa-solid fa-link"></i> Create Direct Link</h3>
+                <input type="text" id="target-url" class="input-field" placeholder="Enter Destination URL">
+                <button class="primary-btn">Generate Direct Link</button>
+            </div>
+        </div>
+
+        <div id="websites-section" class="content-section">
+            <div class="action-card">
+                <h3><i class="fa-solid fa-plus"></i> Add New Website</h3>
+                <input type="text" class="input-field" placeholder="https://example.com">
+                <button class="primary-btn">Submit Website</button>
+            </div>
+        </div>
+
+        <div id="profile-section" class="content-section">
+            <div class="action-card" style="text-align: center;">
+                <img id="profile-pic-large" src="https://via.placeholder.com/100" style="width: 100px; border-radius: 50%; margin-bottom: 15px;">
+                <h2 id="p-name">MD TAREK</h2>
+                <p style="color: var(--text-secondary);">@tarek_username</p>
+                <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
+                <div style="text-align: left; line-height: 2;">
+                    <p><strong>User ID:</strong> <span id="p-id">6158524458</span></p>
+                    <p><strong>Total Earnings:</strong> $21.43</p>
+                    <p><strong>Last Payout:</strong> $0.00</p>
+                    <p><strong>Balance After Last Payout:</strong> $21.43</p>
+                </div>
+            </div>
+        </div>
+
+        </div>
 
     <script>
+        // Sidebar Toggle
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            sidebar.classList.toggle('active');
+            overlay.style.display = sidebar.classList.contains('active') ? 'block' : 'none';
+        }
+
+        // Section Navigation
+        function showSection(sectionId) {
+            document.querySelectorAll('.content-section').forEach(sec => sec.classList.remove('active-section'));
+            document.getElementById(sectionId + '-section').classList.add('active-section');
+            
+            // Sidebar auto close on mobile
+            toggleSidebar();
+
+            // Update Active Menu
+            document.querySelectorAll('.sidebar-item').forEach(item => item.classList.remove('active'));
+            // logic to find the item and add active
+        }
+
+        // Telegram Integration
         const tele = window.Telegram.WebApp;
         tele.expand();
-        tele.ready();
 
         document.addEventListener('DOMContentLoaded', () => {
             const user = tele.initDataUnsafe?.user;
             if (user) {
-                const fullName = user.first_name + (user.last_name ? ' ' + user.last_name : '');
-                document.getElementById('user-name-settings').innerText = fullName;
-                document.getElementById('tg-id-val').innerText = user.id;
-                
-                if (user.photo_url) {
-                    document.getElementById('user-photo').src = user.photo_url;
+                document.getElementById('p-name').innerText = user.first_name + " " + (user.last_name || "");
+                document.getElementById('p-id').innerText = user.id;
+                if(user.photo_url) {
+                    document.getElementById('user-avatar').src = user.photo_url;
+                    document.getElementById('profile-pic-large').src = user.photo_url;
                 }
-
-                // Generate Referral Link
-                const refLink = `https://t.me/yourbotusername?start=ref_${user.id}`;
-                document.getElementById('ref-link').value = refLink;
             }
-            
-            // Loading এর পর সরাসরি Dashboard দেখাবে (Welcome Screen বাদ)
-            setTimeout(() => {
-                document.getElementById('loading-screen').style.display = 'none';
-                document.getElementById('dashboard-section').style.display = 'block';
-            }, 1500);
         });
-
-        function showSection(section) {
-            document.querySelectorAll('.content-section').forEach(s => s.style.display = 'none');
-            document.getElementById(section + '-section').style.display = 'block';
-
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            document.getElementById('nav-' + section).classList.add('active');
-        }
-
-        // Placeholder functions (কোনো ফাংশন মুছা হয়নি)
-        function handleLinkCreation() {
-            const url = document.getElementById('target-url').value;
-            if (!url) return alert("Please enter a valid URL");
-            const generated = "https://adzentrads.com/s/" + Math.random().toString(36).substring(2, 10);
-            document.getElementById('final-link').value = generated;
-            document.getElementById('result-area').style.display = 'block';
-        }
-
-        function copyToClipboard(id) {
-            const el = document.getElementById(id);
-            el.select();
-            document.execCommand('copy');
-            alert("✅ Copied Successfully!");
-        }
-
-        function requestWithdraw() {
-            alert("✅ Withdrawal request submitted! (Demo)");
-        }
-
-        function saveSettings() {
-            alert("✅ Settings Saved Successfully!");
-        }
     </script>
 </body>
 </html>
