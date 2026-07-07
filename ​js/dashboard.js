@@ -1,12 +1,12 @@
 /**
  * Adzentra Ads - Professional Dashboard Logic (v2.4)
- * Features: Auto-Link Generation, Multi-Link List, Alias Editing & Analytics
+ * Updated: Firebase Firestore Architecture with Real-time Logs Sync
  */
 
 // আপনার ব্যাকএন্ড ডোমেইন (শেষে /r/ সহ)
 const BACKEND_URL = "https://adzentra-kworig5a4-md-tarek-s-projects.vercel.app/r/";
 
-// ১. অটোমেটিক স্মার্ট লিংক জেনারেট করার ফাংশন
+// ১. অটোমেটিক স্মার্ট লিংক জেনারেট করার ফায়ারস্টোর ফাংশন
 async function handleLinkCreation() {
     if (!currentUser) return window.Telegram.WebApp.showAlert("User not loaded!");
 
@@ -15,25 +15,22 @@ async function handleLinkCreation() {
         const shortCode = Math.random().toString(36).substring(2, 8).toUpperCase();
         const defaultName = "Link_" + (Math.floor(Math.random() * 900) + 100);
         
-        // নোট: ইউজার ইনপুট ছাড়াই জেনারেট হচ্ছে। অরিজিনাল ইউআরএল হিসেবে ব্যাকএন্ড ডিফল্ট ব্যবহার হবে।
+        // Monetag বা অন্য নেটওয়ার্কের ডিফল্ট ডাইরেক্ট লিংক ব্যাকএন্ডে হ্যান্ডেল হবে
         const defaultOriginalUrl = "MONETAG_DIRECT_LINK_HERE"; 
 
-        const { error } = await supabase
-            .from('links')
-            .insert([{ 
-                publisher_id: currentUser.id,
-                short_code: shortCode,
-                original_url: defaultOriginalUrl,
-                alias: defaultName, // লিংকের নাম সেভ করার জন্য
-                created_at: new Date()
-            }]);
-
-        if (error) throw error;
+        // ফায়ারস্টোরের 'smart_links' কালেকশনে রিয়েল ডাটা ইনসার্ট
+        await db.collection('smart_links').add({
+            publisher_id: String(currentUser.id),
+            short_code: shortCode,
+            original_url: defaultOriginalUrl,
+            alias: defaultName,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
 
         window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
         window.Telegram.WebApp.showAlert("🚀 New Smart Link Created!");
         
-        // লিস্ট রিফ্রেশ করা
+        // লিংক লিস্ট সাথে সাথে রিফ্রেশ করা
         loadUserLinks();
 
     } catch (err) {
@@ -42,40 +39,39 @@ async function handleLinkCreation() {
     }
 }
 
-// ২. ডাটাবেজ থেকে ইউজারের সব লিংক লোড করা
+// ২. ফায়ারস্টোর ডাটাবেজ থেকে ইউজারের তৈরি করা সব লিংক লাইভ লোড করা
 async function loadUserLinks() {
     const tableBody = document.getElementById('links-list-body');
     if (!tableBody || !currentUser) return;
 
     try {
-        const { data, error } = await supabase
-            .from('links')
-            .select('*')
-            .eq('publisher_id', currentUser.id)
-            .order('created_at', { ascending: false });
+        const snapshot = await db.collection('smart_links')
+            .where('publisher_id', '==', String(currentUser.id))
+            .get();
 
-        if (error) throw error;
-
-        if (!data || data.length === 0) {
+        if (snapshot.empty) {
             tableBody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:20px; color:var(--text-dim);">No links found. Click above to generate!</td></tr>';
             return;
         }
 
         let html = '';
-        data.forEach(item => {
+        snapshot.forEach(doc => {
+            const item = doc.data();
+            const docId = doc.id; // ডক আইডি এডিটের জন্য ব্যবহৃত হবে
             const fullLink = BACKEND_URL + item.short_code;
+            
             html += `
-                <tr style="border-bottom: 1px solid #eee;">
+                <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
                     <td style="padding: 12px 5px;">
-                        <span id="name-text-${item.id}" style="font-weight:600; font-size:13px;">${item.alias || 'Unnamed'}</span>
-                        <i class="fa-solid fa-pen" style="font-size:10px; cursor:pointer; color:var(--primary); margin-left:5px;" onclick="editLinkName(${item.id}, '${item.alias || ''}')"></i>
+                        <span id="name-text-${docId}" style="font-weight:600; font-size:13px;">${item.alias || 'Unnamed'}</span>
+                        <i class="fa-solid fa-pen" style="font-size:10px; cursor:pointer; color:var(--primary); margin-left:5px;" onclick="editLinkName('${docId}', '${item.alias || ''}')"></i>
                     </td>
                     <td style="padding: 12px 5px;">
-                        <input type="text" readonly value="${fullLink}" id="link-val-${item.id}" 
-                               style="width:100px; font-size:10px; border:none; background:#f0f2f5; padding:5px; border-radius:5px;">
+                        <input type="text" readonly value="${fullLink}" id="link-val-${docId}" 
+                               style="width:100px; font-size:10px; border:none; background:rgba(255,255,255,0.05); color:#fff; padding:5px; border-radius:5px;">
                     </td>
                     <td style="padding: 12px 5px; text-align:right;">
-                        <button onclick="copyToClipboardCustom('link-val-${item.id}')" 
+                        <button onclick="copyToClipboardCustom('link-val-${docId}')" 
                                 style="background:var(--primary); color:white; border:none; padding:5px 10px; border-radius:6px; font-size:11px; cursor:pointer;">
                             Copy
                         </button>
@@ -90,88 +86,96 @@ async function loadUserLinks() {
     }
 }
 
-// ৩. লিংকের নাম এডিট করার ফাংশন
-async function editLinkName(id, oldName) {
+// ৩. লিংকের নাম/alias এডিট করার অরিজিনাল ফায়ারস্টোর ফাংশন
+async function editLinkName(docId, oldName) {
     const newName = prompt("Enter a nickname for this link:", oldName);
     if (newName === null || newName.trim() === "" || newName === oldName) return;
 
     try {
-        const { error } = await supabase
-            .from('links')
-            .update({ alias: newName.trim() })
-            .eq('id', id);
-
-        if (error) throw error;
-        loadUserLinks(); // আপডেট শেষে লিস্ট রিফ্রেশ
+        await db.collection('smart_links').doc(docId).update({
+            alias: newName.trim()
+        });
+        
+        loadUserLinks(); // ডাটা আপডেট শেষে তালিকা রিফ্রেশ
     } catch (err) {
         window.Telegram.WebApp.showAlert("Failed to update name.");
     }
 }
 
-// ৪. ডাটাবেজ থেকে এনালাইটিক্স এবং ব্যালেন্স লোড করা
+// ৪. ডাটাবেজ থেকে অরিজিনাল এনালাইটিক্স লগ এবং লাইভ ব্যালেন্স লোড করা
 async function loadStats() {
     if (!currentUser) return;
 
     try {
-        const today = new Date().toISOString().split('T')[0];
+        // ১. ইউজারের লেটেস্ট প্রোফাইল ডাটা রিড করা
+        const userDoc = await db.collection('publishers').doc(String(currentUser.id)).get();
+        if (!userDoc.exists) return;
+        const profile = userDoc.data();
 
-        const { data: statsData, error: statsError } = await supabase
-            .from('clicks')
-            .select('*')
-            .eq('publisher_id', currentUser.id);
+        // ২. ইউজারের রিয়েল রেভিনিউ লগ বা রিওয়ার্ডস কালেকশন থেকে ডাটা আনা
+        const rewardsSnapshot = await db.collection('rewards')
+            .where('publisherId', '==', String(currentUser.id))
+            .get();
 
-        const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', currentUser.id)
-            .single();
+        const allRewards = [];
+        rewardsSnapshot.forEach(doc => {
+            allRewards.push(doc.data());
+        });
 
-        if (statsError || profileError) throw statsError || profileError;
-
-        const todayClicksArr = statsData ? statsData.filter(c => c.created_at.startsWith(today)) : [];
-        const totalImpressions = statsData ? statsData.length : 0;
-        const todayImpressions = todayClicksArr.length;
+        // ৩. ব্যালেন্স UI আপডেট
+        const balance = parseFloat(profile.balance || 0).toFixed(4);
+        updateText('balance-val', `$${balance}`);
+        updateText('top-balance', `$${balance}`);
+        updateText('p-balance', `$${balance}`);
         
-        updateText('balance-val', `$${parseFloat(profile.balance || 0).toFixed(4)}`);
-        updateText('top-balance', `$${parseFloat(profile.balance || 0).toFixed(4)}`);
-        updateText('p-balance', `$${parseFloat(profile.balance || 0).toFixed(4)}`);
-        
-        updateText('dash-imp', totalImpressions);
-        updateText('total-imp-val', totalImpressions); // এনালাইটিক্স সেকশনের জন্য
-        updateText('lifetime-val', `$${parseFloat(profile.lifetime_earnings || 0).toFixed(2)}`);
+        // ৪. ইমপ্রেশন ও লাইফটাইম কার্ড রিয়েল ডাটা দ্বারা আপডেট
+        updateText('dash-imp', profile.impressions || 0);
+        updateText('total-imp-val', profile.impressions || 0);
+        updateText('dash-clicks', profile.clicks || 0);
+        updateText('total-click-val', profile.clicks || 0);
+        updateText('lifetime-val', `$${parseFloat(profile.total_earned || 0).toFixed(4)}`);
 
+        // ৫. প্রোফাইল ইনফো প্যানেল
         updateText('p-name', profile.full_name);
         updateText('p-id', profile.id);
         updateText('p-username', `@${profile.username || 'user'}`);
 
-        renderAnalyticsTable(statsData || []);
+        // ৬. এনালাইটিক্স হিস্ট্রি টেবিল জেনারেট করা
+        renderAnalyticsTable(allRewards);
 
     } catch (err) {
         console.error("Dashboard Sync Error:", err.message);
     }
 }
 
-// ৫. এনালাইটিক্স টেবিল রেন্ডারিং
-function renderAnalyticsTable(data) {
+// ৫. এনালাইটিক্স দৈনিক পারফরম্যান্স টেবিল রেন্ডারিং লজিক (রিয়েল ডাটাবেজ গ্রুপিং)
+function renderAnalyticsTable(rewardsData) {
     const tableBody = document.getElementById('analytics-table-body');
-    if(!tableBody) return;
+    if (!tableBody) return;
 
-    const grouped = data.reduce((acc, curr) => {
-        const date = curr.created_at.split('T')[0];
-        if(!acc[date]) acc[date] = { imp: 0, rev: 0 };
-        acc[date].imp += 1; 
-        acc[date].rev += parseFloat(curr.publisher_share || 0);
+    // তারিখ অনুযায়ী ডাটা একসাথে গ্রুপ করার মেকানিজম
+    const grouped = rewardsData.reduce((acc, curr) => {
+        let date = 'Today';
+        if (curr.completedAt) {
+            // Firebase Timestamp কে ISO ডেট ফর্মেটে রূপান্তর
+            date = new Date(curr.completedAt.seconds * 1000).toISOString().split('T')[0];
+        }
+        if (!acc[date]) acc[date] = { imp: 0, rev: 0 };
+        
+        acc[date].imp += 1; // প্রতিটি রিওয়ার্ড লগ ১টি ইমপ্রেশন ও ১টি ক্লিক কাউন্ট করে
+        acc[date].rev += parseFloat(curr.amount || 0);
         return acc;
     }, {});
 
     let html = '';
-    const sortedDates = Object.keys(grouped).sort().reverse().slice(0, 7);
+    const sortedDates = Object.keys(grouped).sort().reverse().slice(0, 7); // সর্বোচ্চ শেষ ৭ দিন দেখাবে
 
     sortedDates.forEach(date => {
         const row = grouped[date];
         const cpm = row.imp > 0 ? (row.rev / row.imp) * 1000 : 0;
+        
         html += `
-            <tr style="border-bottom: 1px solid var(--border);">
+            <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
                 <td style="padding: 12px 5px;">${date}</td>
                 <td style="padding: 12px 5px;">${row.imp}</td>
                 <td style="padding: 12px 5px;">${row.imp}</td> 
@@ -180,13 +184,14 @@ function renderAnalyticsTable(data) {
             </tr>
         `;
     });
-    tableBody.innerHTML = html || '<tr><td colspan="5" style="text-align:center; padding:20px;">No Data Found</td></tr>';
+    
+    tableBody.innerHTML = html || '<tr><td colspan="5" style="text-align:center; padding:20px; color: var(--text-dim);">No Data Found</td></tr>';
 }
 
 // ৬. ক্লিপবোর্ড কপি ফাংশন
 function copyToClipboardCustom(id) {
     const copyText = document.getElementById(id);
-    if(!copyText) return;
+    if (!copyText) return;
     
     copyText.select();
     copyText.setSelectionRange(0, 99999); 
@@ -196,19 +201,20 @@ function copyToClipboardCustom(id) {
     window.Telegram.WebApp.showAlert("Link Copied! 📋");
 }
 
-// ৭. হেল্পার ফাংশনসমূহ
+// ৭. হেল্পার টেক্সট চেঞ্জার ফাংশন
 function updateText(id, val) {
     const el = document.getElementById(id);
-    if(el) el.innerText = val;
+    if (el) el.innerText = val;
 }
 
-// ৮. ইনিশিয়াল লোড এবং অটো রিফ্রেশ
+// ৮. ইনিশিয়াল লোড সিঙ্কিং
 document.addEventListener('DOMContentLoaded', () => {
-    // ইউজারের ডাটা লোড হওয়ার জন্য ২ সেকেন্ড সময় দেওয়া হলো
+    // ফায়ারবেস অ্যাপ ও অথ সেশন পুরোপুরি লোড হতে ২ সেকেন্ড বাফার টাইম
     setTimeout(() => {
         loadStats();
         loadUserLinks();
     }, 2000);
 });
 
+// প্রতি ৩০ সেকেন্ড পর পর ড্যাশবোর্ডের মূল ব্যালেন্স স্ট্যাটাস ব্যাকগ্রাউন্ডে চেক হবে
 setInterval(loadStats, 30000);
