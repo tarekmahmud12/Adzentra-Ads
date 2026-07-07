@@ -1,0 +1,9 @@
+{
+  "name": "adzentra-ads-backend",
+  "version": "1.0.0",
+  "description": "Adzentra Ads Serverless Backend for Vercel",
+  "main": "api/requestAd.js",
+  "dependencies": {
+    "firebase-admin": "^12.0.0"
+  }
+}
