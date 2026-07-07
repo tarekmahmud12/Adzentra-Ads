@@ -6,7 +6,9 @@
     <title>Adzentra Ads - Professional Publisher Dashboard</title>
     
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
@@ -84,6 +86,11 @@
 </head>
 <body>
 
+    <div id="loading-screen" style="position:fixed; top:0; left:0; width:100%; height:100%; background:#f4f7fe; z-index:9999; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:15px;">
+        <i class="fa-solid fa-circle-notch fa-spin" style="font-size:40px; color:var(--primary);"></i>
+        <p style="font-weight:600; color:var(--text-main); font-size:14px;">Syncing Secure Database...</p>
+    </div>
+
     <div id="overlay" onclick="toggleSidebar()"></div>
 
     <div id="sidebar">
@@ -119,7 +126,7 @@
                 </div>
                 <div class="stat-card">
                     <h5>Total Earnings</h5>
-                    <div class="value text-green" id="lifetime-val">$0.00</div>
+                    <div class="value text-green" id="lifetime-val">$0.0000</div>
                 </div>
                 <div class="stat-card">
                     <h5>Impressions</h5>
@@ -133,41 +140,42 @@
             <div class="action-card">
                 <h4>Quick Actions</h4>
                 <button class="primary-btn" onclick="showSection('direct-link')">Create Smart Link</button>
+                <button class="primary-btn" style="background:#28a745; margin-top:10px;" onclick="triggerTestAd()">Test Push Banner Ad</button>
             </div>
         </div>
 
         <div id="direct-link-section" class="content-section">
-    <div class="action-card" style="text-align: center;">
-        <h3 style="margin-bottom: 20px;"><i class="fa-solid fa-wand-magic-sparkles"></i> Magic Link Generator</h3>
-        <p style="color: var(--text-dim); margin-bottom: 20px;">No URL needed! Just click the button below to get your unique smart link instantly.</p>
-        
-        <button class="primary-btn" id="gen-btn" onclick="generateAutoLink()" style="font-size: 16px; padding: 15px;">
-            <i class="fa-solid fa-plus-circle"></i> Generate New Smart Link
-        </button>
-    </div>
+            <div class="action-card" style="text-align: center;">
+                <h3 style="margin-bottom: 20px;"><i class="fa-solid fa-wand-magic-sparkles"></i> Magic Link Generator</h3>
+                <p style="color: var(--text-dim); margin-bottom: 20px;">No URL needed! Just click the button below to get your unique smart link instantly.</p>
+                
+                <button class="primary-btn" id="gen-btn" onclick="handleLinkCreation()" style="font-size: 16px; padding: 15px;">
+                    <i class="fa-solid fa-plus-circle"></i> Generate New Smart Link
+                </button>
+            </div>
 
-    <div class="action-card" style="margin-top: 20px; overflow-x: auto;">
-        <h4 style="margin-bottom: 15px;">Your Active Links</h4>
-        <table style="width: 100%; border-collapse: collapse; min-width: 400px;">
-            <thead>
-                <tr style="text-align: left; background: #f8faff;">
-                    <th style="padding: 12px;">Name (Edit)</th>
-                    <th style="padding: 12px;">Smart Link</th>
-                    <th style="padding: 12px;">Action</th>
-                </tr>
-            </thead>
-            <tbody id="links-list-body">
-                <tr><td colspan="3" style="text-align:center; padding:20px;">Generating your first link...</td></tr>
-            </tbody>
-        </table>
-    </div>
+            <div class="action-card" style="margin-top: 20px; overflow-x: auto;">
+                <h4 style="margin-bottom: 15px;">Your Active Links</h4>
+                <table style="width: 100%; border-collapse: collapse; min-width: 400px;">
+                    <thead>
+                        <tr style="text-align: left; background: #f8faff;">
+                            <th style="padding: 12px;">Name (Edit)</th>
+                            <th style="padding: 12px;">Smart Link</th>
+                            <th style="padding: 12px;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="links-list-body">
+                        <tr><td colspan="3" style="text-align:center; padding:20px; color:var(--text-dim);">Connecting with Cloud Server...</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <div id="websites-section" class="content-section">
             <div class="action-card">
                 <h3><i class="fa-solid fa-plus"></i> Add New Website</h3>
-                <input type="text" class="input-field" placeholder="https://example.com">
-                <button class="primary-btn">Submit Website</button>
+                <input type="text" id="target-website-url" class="input-field" placeholder="https://example.com">
+                <button class="primary-btn" onclick="window.Telegram.WebApp.showAlert('Feature coming soon in Next Core Update!')">Submit Website</button>
             </div>
         </div>
 
@@ -183,7 +191,7 @@
                         <tr><th>Date</th><th>Imp</th><th>Clicks</th><th>CPM</th><th>Revenue</th></tr>
                     </thead>
                     <tbody id="analytics-table-body">
-                        <tr><td colspan="5" style="text-align:center; padding: 20px; color: var(--text-dim);">No data found</td></tr>
+                        <tr><td colspan="5" style="text-align:center; padding: 20px; color: var(--text-dim);">Fetching report logs...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -191,121 +199,45 @@
 
         <div id="withdraw-section" class="content-section">
             <div class="action-card">
-                <h3><i class="fa-solid fa-wallet"></i> Withdraw</h3>
-                <input type="number" class="input-field" placeholder="Enter Amount ($)">
-                <select class="input-field"><option>USDT (TRC20)</option><option>Payeer</option></select>
-                <button class="primary-btn">Request Payout</button>
+                <h3><i class="fa-solid fa-wallet"></i> Withdraw Balance</h3>
+                <input type="number" id="withdraw-amount" class="input-field" placeholder="Enter Amount ($) Min $5">
+                <select id="payment-method" class="input-field">
+                    <option value="USDT_TRC20">USDT (TRC20)</option>
+                    <option value="Payeer">Payeer Account</option>
+                    <option value="Bkash">Bkash (Personal)</option>
+                    <option value="Nagad">Nagad (Personal)</option>
+                </select>
+                <input type="text" id="wallet-address" class="input-field" placeholder="Enter Wallet Address / Phone Account Number" style="margin-bottom:10px;">
+                <button class="primary-btn" onclick="requestWithdraw()">Request Payout</button>
+            </div>
+            
+            <div class="action-card" style="margin-top:20px;">
+                <h4 style="margin-bottom:15px;">Withdrawal Payout History</h4>
+                <div id="withdraw-list">
+                    <div style="text-align:center; padding:15px; color:var(--text-dim);">No transactions requested yet.</div>
+                </div>
             </div>
         </div>
 
         <div id="profile-section" class="content-section">
             <div class="action-card" style="text-align: center;">
-                <img id="profile-pic-large" src="https://via.placeholder.com/100" style="width: 80px; border-radius: 50%; border: 3px solid var(--primary); margin-bottom: 10px;">
-                <h2 id="p-name">Loading...</h2>
+                <img id="profile-pic-large" src="https://via.placeholder.com/100" style="width: 80px; height:80px; object-fit:cover; border-radius: 50%; border: 3px solid var(--primary); margin-bottom: 10px;">
+                <h2 id="p-name">Loading Profile...</h2>
                 <p id="p-username" style="color: var(--text-dim); margin-bottom: 20px;">@username</p>
                 <div style="text-align: left; background: #f8faff; padding: 15px; border-radius: 15px;">
-                    <p style="margin-bottom:8px;"><strong>User ID:</strong> <span id="p-id">0</span></p>
-                    <p style="margin-bottom:8px;"><strong>Balance:</strong> <span id="p-balance">$0.00</span></p>
-                    <p><strong>Quality:</strong> <span class="badge badge-success">Excellent</span></p>
+                    <p style="margin-bottom:8px;"><strong>User ID:</strong> <span id="p-id">00000000</span></p>
+                    <p style="margin-bottom:8px;"><strong>Live Balance:</strong> <span id="p-balance">$0.0000</span></p>
+                    <p><strong>Network Quality:</strong> <span class="badge badge-success">Excellent Traffic</span></p>
                 </div>
             </div>
         </div>
 
     </div>
 
-    <script>
-        // ১. সেকশন নেভিগেশন লজিক
-        function showSection(sectionId) {
-            // সব সেকশন হাইড করা
-            const sections = document.querySelectorAll('.content-section');
-            sections.forEach(sec => sec.classList.remove('active-section'));
-
-            // টার্গেট সেকশন দেখানো
-            const target = document.getElementById(sectionId + '-section');
-            if (target) {
-                target.classList.add('active-section');
-            }
-
-            // সাইডবার আইটেম একটিভ করা
-            document.querySelectorAll('.sidebar-item').forEach(item => {
-                item.classList.remove('active');
-                if(item.innerText.toLowerCase().includes(sectionId)) item.classList.add('active');
-            });
-
-            // সাইডবার বন্ধ করা (মোবাইলে)
-            const sidebar = document.getElementById('sidebar');
-            if(sidebar.classList.contains('active')) toggleSidebar();
-            
-            // যদি এনালাইটিক্স হয় তবে ডাটা লোড করা
-            if(sectionId === 'analytics') loadAnalytics();
-        }
-
-        // ২. সাইডবার টগল
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('overlay');
-            sidebar.classList.toggle('active');
-            overlay.style.display = sidebar.classList.contains('active') ? 'block' : 'none';
-        }
-
-        // ৩. টেলিগ্রাম ডাটা লোড
-        const tg = window.Telegram.WebApp;
-        tg.ready();
-        tg.expand();
-
-        document.addEventListener('DOMContentLoaded', () => {
-            const user = tg.initDataUnsafe?.user;
-            if (user) {
-                const name = user.first_name + (user.last_name ? " " + user.last_name : "");
-                document.getElementById('p-name').innerText = name;
-                document.getElementById('p-username').innerText = "@" + (user.username || "user");
-                document.getElementById('p-id').innerText = user.id;
-                if(user.photo_url) {
-                    document.getElementById('user-avatar').src = user.photo_url;
-                    document.getElementById('profile-pic-large').src = user.photo_url;
-                }
-            }
-            // ইনিশিয়াল ডাটা রিফ্রেশ
-            updateUIFromData();
-        });
-
-        // ৪. ইউজার ডাটা আপডেট (নমুনা ডাটা দিয়ে)
-        let currentUser = { balance: 21.4321, total_earned: 21.43, imp: 483, clicks: 8 };
-
-        function updateUIFromData() {
-            document.getElementById('balance-val').innerText = "$" + currentUser.balance.toFixed(4);
-            document.getElementById('p-balance').innerText = "$" + currentUser.balance.toFixed(4);
-            document.getElementById('lifetime-val').innerText = "$" + currentUser.total_earned.toFixed(2);
-            document.getElementById('dash-imp').innerText = currentUser.imp;
-            document.getElementById('dash-clicks').innerText = currentUser.clicks;
-        }
-
-        // ৫. স্মার্ট লিংক জেনারেটর ফাংশন
-        function handleLinkCreation() {
-            const url = document.getElementById('target-url').value;
-            if(!url) return tg.showAlert("URL দিন!");
-            tg.showConfirm("আপনি কি নিশ্চিত?", (confirmed) => {
-                if(confirmed) tg.showAlert("লিংক তৈরি হয়েছে: https://adzentra.click/" + Math.random().toString(36).substring(7));
-            });
-        }
-
-        // ৬. এনালাইটিক্স ডাটা রেন্ডার
-        function loadAnalytics() {
-            const tableBody = document.getElementById('analytics-table-body');
-            document.getElementById('total-imp-val').innerText = currentUser.imp;
-            document.getElementById('total-click-val').innerText = currentUser.clicks;
-
-            // নমুনা ডাটা রেন্ডারিং
-            tableBody.innerHTML = `
-                <tr>
-                    <td>2026-05-12</td>
-                    <td>483</td>
-                    <td>8</td>
-                    <td>$0.028</td>
-                    <td class="text-green">$0.013</td>
-                </tr>
-            `;
-        }
-    </script>
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/analytics.js"></script>
+    <script src="js/withdraw.js"></script>
 </body>
 </html>
