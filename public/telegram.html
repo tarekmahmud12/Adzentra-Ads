@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adzentra Ads - Telegram Placements</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-primary: #f8f9fa;
+            --surface: #ffffff;
+            --text-main: #1b2559;
+            --text-muted: #a3adc2;
+            --brand-color: #4318ff;
+            --brand-hover: #3311cc;
+            --border-color: #e0e5f2;
+            --success: #05cd99;
+            --danger: #ee5d50;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+            padding: 30px 20px;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        /* Top Header Action Bar */
+        .header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .header-bar h2 {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .btn-primary {
+            background-color: var(--brand-color);
+            color: #ffffff;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--brand-hover);
+        }
+
+        /* Main Data Table Wrapper */
+        .table-card {
+            background: var(--surface);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0px 4px 20px rgba(112, 144, 176, 0.05);
+            overflow: hidden;
+        }
+
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th {
+            background-color: #fcfdfe;
+            padding: 16px 24px;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        td {
+            padding: 18px 24px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-main);
+            border-bottom: 1px solid #f4f7fe;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Table Components Styling */
+        .app-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .app-name {
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .app-id {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .status-badge.active {
+            background-color: #e6fff5;
+            color: var(--success);
+        }
+
+        .status-badge.inactive {
+            background-color: #fff5f5;
+            color: var(--danger);
+        }
+
+        .type-tag {
+            background-color: #f0eeff;
+            color: var(--brand-color);
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .format-tag {
+            background-color: #eef2f6;
+            color: #4A5568;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        /* Responsive Modal (Pop-up Form) */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(11, 19, 43, 0.4);
+            backdrop-filter: blur(4px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-box {
+            background: var(--surface);
+            width: 90%;
+            max-width: 500px;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0px 10px 40px rgba(0, 0, 0, 0.1);
+            transform: translateY(-30px);
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.open .modal-box {
+            transform: translateY(0);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .modal-header h3 {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .modal-header .close-btn {
+            font-size: 20px;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .modal-header .close-btn:hover {
+            color: var(--danger);
+        }
+
+        /* Form Controls */
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 8px;
+        }
+
+        .form-control {
+            width: 100%;
+            background: #f4f7fe;
+            border: 1px solid var(--border-color);
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            color: var(--text-main);
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .form-control:focus {
+            border-color: var(--brand-color);
+            background: #ffffff;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 25px;
+        }
+
+        .btn-secondary {
+            background: #f4f7fe;
+            color: #707eae;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header-bar">
+        <h2>My Placements</h2>
+        <button class="btn-primary" id="open-modal-btn">
+            <i class="fa-solid fa-plus"></i> New Placement
+        </button>
+    </div>
+
+    <div class="table-card">
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Status</th>
+                        <th>Type</th>
+                        <th>Ad Format</th>
+                        <th>Impr.</th>
+                        <th>Clicks</th>
+                        <th>CTR</th>
+                        <th>CPM</th>
+                    </tr>
+                </thead>
+                <tbody id="placements-list">
+                    <tr>
+                        <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 40px;">
+                            <i class="fa-solid fa-database-sync fa-spin" style="font-size: 24px; margin-bottom: 10px; color: var(--brand-color);"></i>
+                            <p>Loading your channels & apps...</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="placement-modal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3>Add New Telegram App</h3>
+            <i class="fa-solid fa-xmark close-btn" id="close-modal-btn"></i>
+        </div>
+        <form id="add-placement-form">
+            <div class="form-group">
+                <label for="appName">App Name</label>
+                <input type="text" id="appName" class="form-control" placeholder="e.g., PP Coin Mining Bot" required>
+            </div>
+            <div class="form-group">
+                <label for="appLink">App Link (Telegram Bot URL)</label>
+                <input type="url" id="appLink" class="form-control" placeholder="https://t.me/your_bot" required>
+            </div>
+            <div class="form-group">
+                <label for="adFormat">Default Ad Format</label>
+                <select id="adFormat" class="form-control" required>
+                    <option value="Push-Style">Push-Style Ads</option>
+                    <option value="Interstitial">Interstitial Ads</option>
+                    <option value="IME Ad">IME Ad</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="traffic">Estimated Monthly Active Users (MAU)</label>
+                <select id="traffic" class="form-control" required>
+                    <option value="Under 50k">Under 50,000</option>
+                    <option value="50k - 200k">50,000 - 200,000</option>
+                    <option value="200k - 1M">200,000 - 1,000,000</option>
+                    <option value="1M+">More than 1,000,000</option>
+                </select>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn-secondary" id="cancel-btn">Cancel</button>
+                <button type="submit" class="btn-primary" id="submit-btn">Create Placement</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // মোডাল পপআপ ওপেন ও ক্লোজ লজিক
+    const modal = document.getElementById('placement-modal');
+    document.getElementById('open-modal-btn').onclick = () => modal.classList.add('open');
+    document.getElementById('close-modal-btn').onclick = () => modal.classList.remove('open');
+    document.getElementById('cancel-btn').onclick = () => modal.classList.remove('open');
+
+    // ডাটাবেজ ভেরিফাইড রিয়েল-টাইম ডাটা ফেচিং আর্কিটেকচার (একবার জেনারেট হয়ে রেন্ডার হবে)
+    async function loadUserPlacements() {
+        const listContainer = document.getElementById('placements-list');
+        // এখানে আপনার ব্যাকএন্ড এপিআই সোর্স লিঙ্ক হবে
+        const userId = "current_logged_in_user_id"; 
+
+        try {
+            // ধরি আপনার এপিআই ডাইনামিক ডাটা প্রোভাইড করছে
+            // const res = await fetch(`/api/getPlacements?userId=${userId}`);
+            // const data = await res.json();
+            
+            // ডেমো ডাটাবেজ স্ট্রাকচার ভিউ আপনার স্ক্রিনশটের ম্যাপিং অনুযায়ী:
+            const mockData = [
+                { id: "11715", name: "PP Coin", status: "Active", type: "Telegram Mini App", format: "Interstitial", impr: 12, clicks: 0, ctr: "0%", cpm: "$0.5095" },
+                { id: "13118", name: "Tap Mining", status: "Active", type: "Telegram Mini App", format: "Interstitial", impr: 10, clicks: 0, ctr: "0%", cpm: "$0.3751" },
+                { id: "09715", name: "Coin Bazar", status: "Active", type: "Telegram Mini App", format: "IME Ad", impr: 0, clicks: 0, ctr: "0%", cpm: "$0" }
+            ];
+
+            listContainer.innerHTML = ""; // লোডার রিমুভ করা
+
+            mockData.forEach(app => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>
+                        <div class="app-info">
+                            <span class="app-name">${app.name}</span>
+                            <span class="app-id">#${app.id}</span>
+                        </div>
+                    </td>
+                    <td><span class="status-badge ${app.status.toLowerCase()}">${app.status}</span></td>
+                    <td><span class="type-tag">${app.type}</span></td>
+                    <td><span class="format-tag">${app.format}</span></td>
+                    <td>${app.impr}</td>
+                    <td>${app.clicks}</td>
+                    <td>${app.ctr}</td>
+                    <td style="font-weight: 700; color: var(--text-main);">${app.cpm}</td>
+                `;
+                listContainer.appendChild(tr);
+            });
+
+        } catch (error) {
+            listContainer.innerHTML = `<tr><td colspan="8" style="text-align:center; color:var(--danger)">Failed to load data.</td></tr>`;
+        }
+    }
+
+    // ফর্ম সাবমিট লজিক (ডাটাবেজে নতুন অ্যাপ সেভ করার প্রসেস)
+    document.getElementById('add-placement-form').onsubmit = async (e) => {
+        e.preventDefault();
+        const submitBtn = document.getElementById('submit-btn');
+        submitBtn.innerHTML = '<span class="spinner"></span> Saving...';
+        submitBtn.disabled = true;
+
+        const placementData = {
+            name: document.getElementById('appName').value,
+            link: document.getElementById('appLink').value,
+            format: document.getElementById('adFormat').value,
+            traffic: document.getElementById('traffic').value,
+            timestamp: Date.now()
+        };
+
+        console.log("Saving to Firestore Database:", placementData);
+
+        // এখানে আপনার ফায়ারবেস/সার্ভারলেস এপিআই কল হবে:
+        /*
+        await fetch('/api/addPlacement', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(placementData)
+        });
+        */
+
+        // সফলভাবে সেভ হওয়ার পর অ্যাকশন
+        setTimeout(() => {
+            modal.classList.remove('open');
+            submitBtn.innerHTML = 'Create Placement';
+            submitBtn.disabled = false;
+            document.getElementById('add-placement-form').reset();
+            loadUserPlacements(); // টেবিল ডাটা রিফ্রেশ
+        }, 1200);
+    };
+
+    // ইনিশিয়াল লোড
+    window.onload = loadUserPlacements;
+</script>
+</body>
+  </html>
