@@ -1,10 +1,10 @@
 /**
  * Adzentra Ads - Professional Application Logic
- * Updated: Sidebar Support, Detailed Profile & Analytics Sync
+ * Updated: Firebase Realtime Firestore Sync, Anti-Interval Engine
  */
 
 let currentUser = null;
-let statsUpdateInterval = null;
+let unsubscribeUser = null; // রিয়েল-টাইম লিসেনার বন্ধ/চালু করার জন্য ট্র্যাকিং ভেরিয়েবল
 
 // ১. অ্যাপ শুরু করার মেইন ফাংশন
 async function initApp() {
@@ -19,18 +19,17 @@ async function initApp() {
         try {
             const tgUser = tg.initDataUnsafe?.user;
             if (tgUser) {
-                // api.js থেকে ডাটা সিঙ্ক
+                // js/api.js থেকে ফায়ারবেস ডাটা সিঙ্ক করা
                 currentUser = await syncTelegramUser();
                 if (currentUser) {
-                    // সরাসরি ড্যাশবোর্ড বা প্রোফাইলে দেখাবে
                     showSection('dashboard'); 
-                    updateGlobalUI();
-                    startBackgroundSync(); 
+                    // রিয়েল-টাইম ডাটা সিঙ্কিং লিসেনার চালু করা
+                    startRealtimeSync(currentUser.id);
                 } else {
                     showSection('dashboard');
                 }
             } else {
-                console.warn("No Telegram Data! Preview Mode.");
+                console.warn("No Telegram Data! Running Preview Mode.");
                 showSection('dashboard');
             }
         } catch (error) {
@@ -40,7 +39,7 @@ async function initApp() {
     }, 800);
 }
 
-// ২. Sidebar Toggle ফাংশন (নতুন যুক্ত করা হয়েছে)
+// ২. Sidebar Toggle ফাংশন
 function toggleSidebar() {
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('overlay');
@@ -50,9 +49,8 @@ function toggleSidebar() {
     }
 }
 
-// ৩. SPA সেকশন নেভিগেশন (সম্পূর্ণ আপডেট করা হয়েছে)
+// ৩. SPA সেকশন নেভিগেশন
 function showSection(sectionId) {
-    // সব সম্ভাব্য সেকশন আইডি
     const sections = [
         'loading-screen', 'welcome-screen', 'dashboard-section', 
         'analytics-section', 'withdraw-section', 'profile-section',
@@ -64,38 +62,49 @@ function showSection(sectionId) {
         if (el) el.style.display = 'none';
     });
 
-    // সঠিক আইডি ফরম্যাট খুঁজে বের করা
     let targetId = sectionId.includes('-section') ? sectionId : sectionId + '-section';
     if (sectionId === 'loading' || sectionId === 'welcome') targetId = sectionId + '-screen';
 
     const target = document.getElementById(targetId);
     if (target) {
         target.style.display = 'block';
-        // সেকশন চেঞ্জ হলে অটোমেটিক সাইডবার বন্ধ হবে
+        // সেকশন চেঞ্জ হলে স্বয়ংক্রিয়ভাবে সাইডবার বন্ধ হবে
         const sidebar = document.getElementById('sidebar');
         if (sidebar && sidebar.classList.contains('active')) toggleSidebar();
     }
+
+    // যদি অ্যানালিটিক্স সেকশন ওপেন হয়, তবে ফায়ারস্টোর থেকে লগ লোড হবে
+    if (sectionId === 'analytics' && typeof loadFullAnalytics === 'function') {
+        loadFullAnalytics();
+    }
 }
 
-// ৪. গ্লোবাল ইউজার ইন্টারফেস আপডেট (ইউজারের সব তথ্য ড্যাশবোর্ডে বসাবে)
+// ৪. গ্লোবাল ইউজার ইন্টারফেস আপডেট (রিয়েল-টাইম ডাটা স্ক্রিনে পুশ করার লজিক)
 function updateGlobalUI() {
     if (!currentUser) return;
 
-    // নাম এবং ইউজার আইডি
+    // নাম, ইউজার আইডি এবং ইউজারনেম আপডেট
     const fullName = currentUser.full_name || "Publisher";
     document.querySelectorAll('#user-name, #p-name, #user-name-settings').forEach(el => el.innerText = fullName);
     document.querySelectorAll('#p-id, #tg-id-val').forEach(el => el.innerText = currentUser.id);
     document.querySelectorAll('#p-username').forEach(el => el.innerText = `@${currentUser.username || 'user'}`);
 
-    // ব্যালেন্স আপডেট (৪ দশমিক পর্যন্ত)
+    // ব্যালেন্স আপডেট (৪ দশমিক পর্যন্ত নিখুঁত প্রদর্শন)
     const balance = parseFloat(currentUser.balance || 0).toFixed(4);
     document.querySelectorAll('#balance-val, #top-balance, #p-balance').forEach(el => {
         el.innerText = `$${balance}`;
     });
 
-    // স্ট্যাটিস্টিক্স কার্ড আপডেট
-    if(document.getElementById('lifetime-val')) 
-        document.getElementById('lifetime-val').innerText = `$${parseFloat(currentUser.total_earned || 0).toFixed(2)}`;
+    // টোটাল আর্নিং ও স্ট্যাটিস্টিক্স কার্ড আপডেট
+    if (document.getElementById('lifetime-val')) {
+        document.getElementById('lifetime-val').innerText = `$${parseFloat(currentUser.total_earned || 0).toFixed(4)}`;
+    }
+    if (document.getElementById('dash-imp')) {
+        document.getElementById('dash-imp').innerText = currentUser.impressions || 0;
+    }
+    if (document.getElementById('dash-clicks')) {
+        document.getElementById('dash-clicks').innerText = currentUser.clicks || 0;
+    }
     
     // প্রোফাইল পিকচার সিঙ্ক
     const photoUrl = currentUser.profile_pic_url || window.Telegram.WebApp.initDataUnsafe?.user?.photo_url;
@@ -103,74 +112,92 @@ function updateGlobalUI() {
         if (photoUrl) el.src = photoUrl;
     });
 
-    // রেফারেল লিংক
+    // রেফারেল লিংক জেনারেশন
     const refLinkInput = document.getElementById('ref-link');
     if (refLinkInput) {
-        const botUsername = "AdzentraAdsBot"; // আপনার বটের ইউজারনেম দিন
+        const botUsername = "AdzentraAdsBot"; // আপনার অফিসিয়াল বটের ইউজারনেম
         refLinkInput.value = `https://t.me/${botUsername}?start=ref_${currentUser.id}`;
     }
 }
 
-// ৫. ব্যাকগ্রাউন্ড সিঙ্ক (অটো রিফ্রেশ)
-function startBackgroundSync() {
-    if (statsUpdateInterval) clearInterval(statsUpdateInterval);
-    statsUpdateInterval = setInterval(async () => {
-        await refreshUserData();
-    }, 30000); 
+// ৫. ফায়ারবেস রিয়েল-টাইম ডাটা সিঙ্কিং (পুরোনো ইন্টারভাল মেকানিজম রিপ্লেসড)
+function startRealtimeSync(userId) {
+    if (unsubscribeUser) unsubscribeUser();
+
+    // অন-স্প্ল্যাপশট লিসেনার ডাটাবেজের যেকোনো পরিবর্তন লাইভ ট্র্যাক করবে
+    unsubscribeUser = db.collection('publishers').doc(String(userId))
+        .onSnapshot((doc) => {
+            if (doc.exists) {
+                currentUser = doc.data();
+                updateGlobalUI();
+                console.log("Database Synced in Real-time ⚡");
+            }
+        }, (error) => {
+            console.error("Realtime sync failed:", error.message);
+        });
 }
 
-async function refreshUserData() {
-    if (!currentUser) return;
-    try {
-        const { data, error } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', currentUser.id)
-            .single();
-        if (!error && data) {
-            currentUser = data;
-            updateGlobalUI();
-            console.log("Data Synced ✅");
-        }
-    } catch (e) { console.log("Sync failed"); }
-}
-
-// ৬. স্মার্ট লিংক জেনারেশন
+// ৬. স্মার্ট লিংক জেনারেশন (ফায়ারস্টোর ভার্সন)
 async function handleLinkCreation() {
     const urlInput = document.getElementById('target-url');
     const url = urlInput.value;
     if (!url) return window.Telegram.WebApp.showAlert("URL দিন!");
 
+    // ইউআরএল ভ্যালিডেশন চেক
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        return window.Telegram.WebApp.showAlert("সঠিক URL দিন (https://...)");
+    }
+
     const shortCode = Math.random().toString(36).substring(7);
     try {
-        const { error } = await supabase.from('smart_links').insert([{
+        await db.collection('smart_links').add({
             publisher_id: currentUser.id,
             original_url: url,
-            short_code: shortCode
-        }]);
+            short_code: shortCode,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
 
-        if (!error) {
-            window.Telegram.WebApp.showAlert("Link Created! 🚀\nCode: " + shortCode);
-            urlInput.value = "";
-            showSection('direct-link'); // লিংক লিস্টে নিয়ে যাবে
-        }
-    } catch (err) { alert(err.message); }
+        window.Telegram.WebApp.showAlert(`Smart Link Created! 🚀\nURL: ${BACKEND_URL}/go/${shortCode}`);
+        urlInput.value = "";
+        showSection('direct-link'); // সরাসরি একটিভ লিংক সেকশনে রিডাইরেক্ট করবে
+    } catch (err) { 
+        window.Telegram.WebApp.showAlert("Error creating link: " + err.message); 
+    }
 }
 
 // ৭. কপি ফাংশন
 function copyToClipboard(elementId) {
     const copyText = document.getElementById(elementId);
     if (!copyText) return;
+    
+    // মোবাইলের জন্য অপ্টিমাইজড কপি সিঙ্ক
     copyText.select();
+    copyText.setSelectionRange(0, 99999);
+    
     navigator.clipboard.writeText(copyText.value).then(() => {
-        window.Telegram.WebApp.showAlert("Copied! ✅");
+        window.Telegram.WebApp.showAlert("Copied to clipboard! ✅");
+    }).catch(() => {
+        window.Telegram.WebApp.showAlert("Copy failed. Please try manually.");
     });
 }
 
-// ৮. সিকিউরিটি এলার্ট
+// ৮. ডেমো পুশ অ্যাড টেস্ট রানার (পাবলিশারদের টেস্ট করার জন্য)
+function triggerTestAd() {
+    if (!currentUser) return window.Telegram.WebApp.showAlert("টেলিগ্রাম প্রিভিউ মোড! বটের ভেতরে ওপেন করুন।");
+    if (typeof Adzentra !== 'undefined') {
+        Adzentra.initialize({ publisherId: currentUser.id });
+        Adzentra.showPushAd(currentUser.id, (res) => {
+            window.Telegram.WebApp.showAlert("Result: " + res.message);
+        });
+    } else {
+        window.Telegram.WebApp.showAlert("SDK Not Loaded properly.");
+    }
+}
+
+// ৯. সিকিউরিটি এলার্ট (অ্যান্টি ফ্রড)
 async function triggerSecurityAlert(reason) {
     if (reason === "VPN_DETECTED") {
-        window.Telegram.WebApp.showAlert("VPN বন্ধ করুন!");
+        window.Telegram.WebApp.showAlert("নিরাপত্তা জনিত কারণে VPN বন্ধ করে অ্যাপটি পুনরায় ওপেন করুন!");
     }
 }
 
