@@ -8,6 +8,7 @@ if (!admin.apps.length) {
 const db = admin.firestore();
 
 export default async function handler(req, res) {
+    // CORS Headers
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -15,24 +16,43 @@ export default async function handler(req, res) {
     if (req.method === 'OPTIONS') return res.status(200).end();
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-    const { sessionId, rewardToken, tgUserId } = req.body;
+    // sdk.js থেকে পাঠানো বডি ডেটা রিসিভ (sessionToken এবং telegramId)
+    const { sessionToken, telegramId } = req.body;
+
+    if (!sessionToken || !telegramId) {
+        return res.status(400).json({ success: false, error: 'Missing session or user information' });
+    }
 
     try {
-        const sessionRef = db.collection('ad_sessions').doc(sessionId);
+        // ডক আইডি হিসেবে সরাসরি sessionToken দিয়ে রেফারেন্স নেওয়া
+        const sessionRef = db.collection('ad_sessions').doc(sessionToken);
         const sessionDoc = await sessionRef.get();
 
-        if (!sessionDoc.exists) return res.status(400).json({ error: 'Invalid Session' });
+        if (!sessionDoc.exists) {
+            return res.status(400).json({ success: false, error: 'Invalid Session' });
+        }
 
         const sessionData = sessionDoc.data();
 
-        if (sessionData.status !== 'pending') return res.status(400).json({ error: 'Claimed already' });
-        if (sessionData.rewardToken !== rewardToken) return res.status(400).json({ error: 'Token hacked' });
-        if (sessionData.tgUserId !== String(tgUserId)) return res.status(400).json({ error: 'User mismatched' });
+        // অ্যান্টি-ফ্রড ও সিকিউরিটি ভেরিফিকেশন চেক
+        if (sessionData.status !== 'pending') {
+            return res.status(400).json({ success: false, error: 'Claimed already' });
+        }
+        if (sessionData.tgUserId !== String(telegramId)) {
+            return res.status(400).json({ success: false, error: 'User mismatched' });
+        }
 
-        // ভেরিফিকেশন সফল - ব্যালেন্স যোগ
-        await sessionRef.update({ status: 'completed', completedAt: admin.firestore.FieldValue.serverTimestamp() });
+        // ভেরিফিকেশন সফল - সেশন আপডেট (ডাবল ক্লাইম প্রটেকশন)
+        await sessionRef.update({ 
+            status: 'completed', 
+            isClickLogged: true,
+            isImpressionLogged: true,
+            completedAt: admin.firestore.FieldValue.serverTimestamp() 
+        });
 
+        // পাবলিশারের মেইন অ্যাকাউন্ট ব্যালেন্স আপডেট (Atomic Transaction)
         const pubRef = db.collection('publishers').doc(sessionData.publisherId);
+        
         await db.runTransaction(async (transaction) => {
             const pubDoc = await transaction.get(pubRef);
             if (pubDoc.exists) {
@@ -42,24 +62,30 @@ export default async function handler(req, res) {
                 const currentClicks = parseInt(pubDoc.data().clicks || 0);
 
                 transaction.update(pubRef, {
-                    balance: currentBal + 0.0100, // প্রতি ক্লিকের রেভিনিউ $0.01
-                    total_earned: currentEarned + 0.0100,
+                    balance: parseFloat((currentBal + 0.0100).toFixed(4)), // প্রতি ক্লিকের রেভিনিউ $0.01 (JS Floating point ফিক্স সহ)
+                    total_earned: parseFloat((currentEarned + 0.0100).toFixed(4)),
                     impressions: currentImp + 1,
                     clicks: currentClicks + 1
                 });
             }
         });
 
-        // অ্যানালিটিক্স হিস্ট্রির জন্য রেভিনিউ লগ সেভ
+        // ফিউচার অ্যানালিটিক্স ও হিস্ট্রির জন্য রেভিনিউ লগ সেভ
         await db.collection('rewards').add({
             publisherId: sessionData.publisherId,
-            tgUserId: String(tgUserId),
+            tgUserId: String(telegramId),
             amount: 0.0100,
             completedAt: admin.firestore.FieldValue.serverTimestamp()
         });
 
-        return res.status(200).json({ success: true, message: 'Balance credited' });
+        // sdk.js এর রিকোয়ারমেন্ট অনুযায়ী রেসপন্স পাঠানো
+        return res.status(200).json({ 
+            success: true, 
+            rewardAmount: 250, // পাবলিশারের মিনি অ্যাপ ইউজারকে দেখানোর জন্য ডেমো কয়েন কাউন্ট
+            message: 'Balance credited successfully' 
+        });
+
     } catch (err) {
-        return res.status(500).json({ error: err.message });
+        return res.status(500).json({ success: false, error: err.message });
     }
 }
