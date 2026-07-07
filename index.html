@@ -82,6 +82,9 @@
         
         table th { padding: 10px 5px; color: var(--text-dim); border-bottom: 1px solid var(--border); text-transform: uppercase; font-size: 11px; }
         table td { padding: 12px 5px; border-bottom: 1px solid var(--border); font-size: 13px; }
+        
+        /* Code Block Styling for SDK */
+        pre { background: #11141b; color: #00ff88; padding: 15px; border-radius: 12px; font-size: 12px; overflow-x: auto; text-align: left; margin-top: 10px; border: 1px solid rgba(255,255,255,0.08); font-family: monospace; }
     </style>
 </head>
 <body>
@@ -101,7 +104,7 @@
         <div class="sidebar-item active" onclick="showSection('dashboard')"><i class="fa-solid fa-house"></i> Dashboard</div>
         <div class="sidebar-item" onclick="showSection('direct-link')"><i class="fa-solid fa-link"></i> Direct Links</div>
         <div class="sidebar-item" onclick="showSection('websites')"><i class="fa-solid fa-globe"></i> My Websites</div>
-        <div class="sidebar-item"><i class="fa-solid fa-bullhorn"></i> Telegram <span class="coming-soon">Soon</span></div>
+        <div class="sidebar-item" onclick="showSection('telegram-app')"><i class="fa-solid fa-bullhorn"></i> Telegram Apps</div>
         <div class="sidebar-item" onclick="showSection('analytics')"><i class="fa-solid fa-chart-line"></i> Statistics</div>
         <div class="sidebar-item" onclick="showSection('withdraw')"><i class="fa-solid fa-wallet"></i> Withdraw</div>
         <div class="sidebar-item" onclick="showSection('profile')"><i class="fa-solid fa-user"></i> My Profile</div>
@@ -139,7 +142,7 @@
             <div class="action-card">
                 <h4>Quick Actions</h4>
                 <button class="primary-btn" onclick="showSection('direct-link')">Create Smart Link</button>
-                <button class="primary-btn" style="background:#28a745; margin-top:10px;" onclick="triggerTestAd()">Test Push Banner Ad</button>
+                <button class="primary-btn" style="background:#28a745; margin-top:10px;" onclick="showSection('telegram-app')">Integrate Telegram Mini App</button>
             </div>
         </div>
 
@@ -175,6 +178,36 @@
                 <h3><i class="fa-solid fa-plus"></i> Add New Website</h3>
                 <input type="text" id="target-website-url" class="input-field" placeholder="https://example.com">
                 <button class="primary-btn" onclick="window.Telegram.WebApp.showAlert('Feature coming soon in Next Core Update!')">Submit Website</button>
+            </div>
+        </div>
+
+        <div id="telegram-app-section" class="content-section">
+            <div class="action-card">
+                <h3><i class="fa-brands fa-telegram" style="color: #0088cc;"></i> Telegram Mini App Integration</h3>
+                <p style="color: var(--text-dim); font-size: 13px; margin-top: 5px; margin-bottom: 15px;">আপনার Telegram Bot বা Mini App-এ Push-Style বিজ্ঞাপনের মাধ্যমে রেভিনিউ জেনারেট করুন।</p>
+                
+                <label style="font-size: 13px; font-weight: 600;">Mini App / Bot Name:</label>
+                <input type="text" id="tg-app-name" class="input-field" placeholder="e.g., PP Coin Mining Bot">
+                
+                <button class="primary-btn" onclick="generateTelegramSDK()" style="background: #0088cc;">
+                    <i class="fa-solid fa-gears"></i> Connect App & Get SDK
+                </button>
+            </div>
+
+            <div class="action-card" id="sdk-display-card" style="display: none; border-left: 4px solid var(--success);">
+                <h4 style="color: var(--success);"><i class="fa-solid fa-code"></i> Integration SDK Setup</h4>
+                <p style="color: var(--text-dim); font-size: 12px; margin-top: 5px;">নিচের স্ক্রিপ্ট ফাইলটি কপি করে আপনার Mini App-এর HTML ফাইলে যুক্ত করুন:</p>
+                
+                <pre><code id="sdk-code-block">&lt;script src="https://ads.adzentra.com/sdk.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+  Adzentra.initialize({
+      publisherId: "loading..."
+  });
+&lt;/script&gt;</code></pre>
+                
+                <button class="primary-btn" style="background: #11141b; color: #fff; border: 1px solid var(--border); margin-top: 10px;" onclick="copySDKCode()">
+                    <i class="fa-solid fa-copy"></i> Copy SDK Code
+                </button>
             </div>
         </div>
 
@@ -246,7 +279,9 @@
 
             document.querySelectorAll('.sidebar-item').forEach(item => {
                 item.classList.remove('active');
-                if(item.innerText.toLowerCase().includes(sectionId)) item.classList.add('active');
+                if(item.getAttribute('onclick') && item.getAttribute('onclick').includes(sectionId)) {
+                    item.classList.add('active');
+                }
             });
 
             const sidebar = document.getElementById('sidebar');
@@ -261,7 +296,37 @@
             overlay.style.display = sidebar.classList.contains('active') ? 'block' : 'none';
         }
 
-        // ৩. টেলিগ্রাম WebApp ইনিশিয়ালাইজেশন এবং রিয়েল ডাটা সিঙ্ক
+        // ৩. টেলিগ্রাম SDK জেনারেশন মেকানিজম 
+        function generateTelegramSDK() {
+            const appName = document.getElementById('tg-app-name').value.trim();
+            if(!appName) {
+                window.Telegram.WebApp.showAlert('অনুগ্রহ করে আপনার অ্যাপ বা বটের নাম লিখুন!');
+                return;
+            }
+            
+            const userId = document.getElementById('p-id').innerText || "00000000";
+            
+            // ডাইনামিক রিয়েল-টাইম ক্লাউড এসডিকে কোড ব্লক তৈরি
+            const sdkCode = `<script src="https://ads.adzentra.com/sdk.js"><\/script>\n<script>\n  Adzentra.initialize({\n      publisherId: "${userId}"\n  });\n<\/script>`;
+            
+            document.getElementById('sdk-code-block').innerText = sdkCode;
+            document.getElementById('sdk-display-card').style.display = 'block';
+            window.Telegram.WebApp.showAlert('সফলভাবে SDK জেনারেট হয়েছে! কোডটি কপি করে নিন।');
+        }
+
+        // ৪. কোড কপি ফাংশন
+        function copySDKCode() {
+            const codeText = document.getElementById('sdk-code-block').innerText;
+            navigator.clipboard.writeText(codeText).then(() => {
+                window.Telegram.WebApp.showPopup({
+                    title: 'Copied!',
+                    message: 'SDK কোডটি সফলভাবে ক্লিপবোর্ডে কপি হয়েছে।',
+                    buttons: [{type: 'ok'}]
+                });
+            });
+        }
+
+        // ৫. টেলিগ্রাম WebApp ইনিশিয়ালাইজেশন এবং রিয়েল ডাটা সিঙ্ক
         const tg = window.Telegram.WebApp;
         tg.ready();
         tg.expand();
@@ -282,7 +347,7 @@
                 }
             }
 
-            // ৪. ডাটাবেজ সেশন এবং স্ক্রিপ্ট রেডি হওয়ার জন্য লোডিং স্ক্রিন হাইড করা
+            // ৬. ডাটাবেজ সেশন এবং স্ক্রিপ্ট রেডি হওয়ার পর লোডিং স্ক্রিন হাইড করা
             setTimeout(() => {
                 const loader = document.getElementById('loading-screen');
                 if (loader) loader.style.display = 'none';
